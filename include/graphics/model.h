@@ -48,7 +48,7 @@ namespace WDGS
 			DECLARE_MEMMNG(RockyModel)
 
 		public:
-			static Ptr Create(const GLchar* name, Physics::Planet::Ptr obj)
+			static Ptr Create(const GLchar* name, Physics::Planet::Ptr& obj)
 			{
 				char path[PATH_MAX];
 				sprintf(path, "res/models/%s", name);
@@ -66,8 +66,11 @@ namespace WDGS
 
 				Program::Ptr prog = Program::Create();
 
-				prog->AddShader(Shader::CreateFromFile(GL_VERTEX_SHADER, "res/shaders/rocky.vs.glsl"));
-				prog->AddShader(Shader::CreateFromFile(GL_FRAGMENT_SHADER, "res/shaders/rocky.fs.glsl"));
+				Shader::Ptr vs = Shader::CreateFromFile(GL_VERTEX_SHADER, "res/shaders/rocky.vs.glsl");
+				Shader::Ptr fs = Shader::CreateFromFile(GL_FRAGMENT_SHADER, "res/shaders/rocky.fs.glsl");
+
+				prog->AddShader(vs);
+				prog->AddShader(fs);
 				prog->Link();
 
 				sphereMesh->SetProgram(prog);
@@ -137,7 +140,7 @@ namespace WDGS
 			DECLARE_MEMMNG(StarModel)
 
 		public:
-			static Ptr Create(const GLchar* name, Physics::Star::Ptr obj)
+			static Ptr Create(const GLchar* name, Physics::Star::Ptr& obj)
 			{
 				char path[PATH_MAX];
 				sprintf(path, "res/models/%s", name);
@@ -155,8 +158,11 @@ namespace WDGS
 
 				Program::Ptr prog = Program::Create();
 
-				prog->AddShader(Shader::CreateFromFile(GL_VERTEX_SHADER, "res/shaders/star.vs.glsl"));
-				prog->AddShader(Shader::CreateFromFile(GL_FRAGMENT_SHADER, "res/shaders/star.fs.glsl"));
+				Shader::Ptr vs = Shader::CreateFromFile(GL_VERTEX_SHADER, "res/shaders/star.vs.glsl");
+				Shader::Ptr fs = Shader::CreateFromFile(GL_FRAGMENT_SHADER, "res/shaders/star.fs.glsl");
+
+				prog->AddShader(vs);
+				prog->AddShader(fs);
 				prog->Link();
 
 				sphereMesh->SetProgram(prog);

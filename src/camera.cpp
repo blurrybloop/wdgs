@@ -6,7 +6,7 @@
 namespace WDGS
 {
 
-	void Camera::FocusOn(Physics::Object::Ptr obj)
+	void Camera::FocusOn(Physics::Object::Ptr& obj)
 	{
 		this->focusedOn = obj;
 		UpdateTransform();

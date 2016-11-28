@@ -33,7 +33,7 @@ namespace WDGS
 		{
 			static char str[2] = { 0 };
 			str[0] = c;
-			OutputDebugStringA((const char*)&c);
+			OutputDebugStringA(str);
 			return c;
 		}
 

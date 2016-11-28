@@ -28,7 +28,7 @@ namespace WDGS
 
 
 	public:
-		void FocusOn(Physics::Object::Ptr obj);
+		void FocusOn(Physics::Object::Ptr& obj);
 
 		void UpdateTransform();
 		glm::dmat4& GetTransform();

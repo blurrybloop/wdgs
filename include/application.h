@@ -5,15 +5,15 @@
 #include <Windows.h>
 #endif
 
-#include <GL\glew.h>
-#include <GLFW\glfw3.h>
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 
 #include <string>
 
 #include "config.h"
-#include "graphics\texture.h"
-#include "graphics\mesh.h"
-#include "physics\simulation.h"
+#include "graphics/texture.h"
+#include "graphics/mesh.h"
+#include "physics/simulation.h"
 #include "simrenderer.h"
 
 namespace WDGS

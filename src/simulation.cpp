@@ -1,5 +1,5 @@
-#include "physics\simulation.h"
-#include "physics\simhelpers.h"
+#include "physics/simulation.h"
+#include "physics/simhelpers.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
@@ -11,7 +11,7 @@ namespace WDGS
 		const double Simulation::gravityConst(6.6740831E-11);
 
 
-		void Simulation::AddObject(Object::Ptr obj)
+		void Simulation::AddObject(Object::Ptr& obj)
 		{
 			objects.push_back(obj);
 
@@ -43,7 +43,7 @@ namespace WDGS
 
 		}
 
-		void Simulation::RemoveObject(Object::Ptr obj)
+		void Simulation::RemoveObject(Object::Ptr& obj)
 		{
 			auto it = std::find(objects.begin(), objects.end(), obj);
 			if (it != objects.end())
@@ -119,7 +119,7 @@ namespace WDGS
 
 
 		//Вектор производных для закона всемирного притяжения
-		void Simulation::Equations(std::vector<MaterialPoint*>& objs, int index, std::vector<double>& flow)
+		void Simulation::Equations(std::vector<MaterialPoint*>& objs, size_t index, std::vector<double>& flow)
 		{
 			double d;
 			MaterialPoint* obj = objs[index];
@@ -203,7 +203,7 @@ namespace WDGS
 				in_w = (double*)in[j];
 
 				for (int i = 0; i < RV_LENGTH; ++i)
-					scale[j][i] = abs(in_w[i]) + abs(scale[j][i] * dt) + TINY;
+					scale[j][i] = glm::abs(in_w[i]) + glm::abs(scale[j][i] * dt) + TINY;
 			}
 
 			bool exit = false;
@@ -228,7 +228,7 @@ namespace WDGS
 
 					error = 0.0;
 					for (int i = 0; i < RV_LENGTH; i++)
-						error = glm::max(abs(Delta[j][i] / scale[j][i]), error);
+						error = glm::max(glm::abs(Delta[j][i] / scale[j][i]), error);
 					error /= accuracy;
 					if (error <= 1)
 					{
@@ -240,12 +240,12 @@ namespace WDGS
 						continue;
 					}
 
-					dt_temp = SAFETY * dt * pow(error, PSHRINK);
+					dt_temp = SAFETY * dt * glm::pow(error, PSHRINK);
 					if (dt >= 0)
 						dt_temp = glm::max(dt_temp, 0.1 * dt);
 					else
 						dt_temp = glm::min(dt_temp, 0.1 * dt);
-					if (abs(dt_temp) == 0.0) {
+					if (glm::abs(dt_temp) == 0.0) {
 						return dt;
 					}
 
@@ -257,7 +257,7 @@ namespace WDGS
 			}
 
 			if (error > ERRCON)
-				dt *= SAFETY * pow(error, PGROW);
+				dt *= SAFETY * glm::pow(error, PGROW);
 			else
 				dt *= 5;
 			for (int j = 0; j < n; ++j)

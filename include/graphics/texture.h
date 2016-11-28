@@ -47,7 +47,6 @@ namespace WDGS
 				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
 				glm::tvec3<GLsizei> const extent(tex.extent());
-				GLsizei const faceTotal = static_cast<GLsizei>(tex.layers() * tex.faces());
 
 				for (std::size_t layer = 0; layer < tex.layers(); ++layer)
 					for (std::size_t face = 0; face < tex.faces(); ++face)
@@ -108,6 +107,9 @@ namespace WDGS
 										extent.x, extent.y, tex.target() == gli::TARGET_3D ? extent.z : LayerGL, 0,
 										fmt.External, fmt.Type,
 										tex.data(layer, face, level));
+								break;
+
+							default:
 								break;
 							}
 						}

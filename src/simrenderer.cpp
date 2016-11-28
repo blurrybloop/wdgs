@@ -77,12 +77,15 @@ namespace WDGS
 		models[earth.get()] = Graphics::RockyModel::Create("earth", earth);
 		models[sun.get()] = Graphics::StarModel::Create("sun", sun);
 
-		sim->AddObject(sun);
-		sim->AddObject(earth);
+		Physics::Object::Ptr o = sun;
+		sim->AddObject(o);
+
+		o = earth;
+		sim->AddObject(o);
 
 		camera->distanceToFocus = earth->radius + 30000000.0;
 
-		camera->FocusOn(earth);
+		camera->FocusOn(o);
 
 	}
 

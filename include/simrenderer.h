@@ -9,7 +9,7 @@
 #include "graphics/texture.h"
 
 #include "camera.h"
-#include <GLFW\glfw3.h>
+#include <GLFW/glfw3.h>
 
 namespace WDGS
 {

@@ -21,6 +21,8 @@ namespace WDGS
 				Ptr ptr = Create();
 				for (size_t i = 0; i < shaders.size(); ++i)
 					ptr->AddShader(shaders[i]);
+
+				return ptr;
 			}
 
 		protected:
@@ -43,7 +45,7 @@ namespace WDGS
 			{
 				if (id)				
 				{
-					auto it = std::find(shaders.begin(), shaders.end(), sh);
+					auto it = std::find_if(shaders.begin(), shaders.end(), std::bind2nd(ptr_equals<Shader::Ptr>(), sh));
 					if (it != shaders.end())
 					{
 						shaders.erase(it);

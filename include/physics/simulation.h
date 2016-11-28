@@ -5,7 +5,7 @@
 
 #include "memmng.h"
 
-#include "physics\object.h"
+#include "physics/object.h"
 #include "simrenderer.h"
 
 namespace WDGS
@@ -47,15 +47,15 @@ namespace WDGS
 			void SetTimestep(double step);
 			double GetTimestep();
 
-			void AddObject(Object::Ptr obj);
-			void RemoveObject(Object::Ptr obj);
+			void AddObject(Object::Ptr& obj);
+			void RemoveObject(Object::Ptr& obj);
 
 			void AttachRenderer(SimulationRenderer::Ptr& renderer);
 			void DetachRenderer(SimulationRenderer::Ptr& renderer);
 
 		protected:
 			//Вектор производных для закона всемирного притяжения
-			static void Equations(std::vector<MaterialPoint*>& objs, int index, std::vector<double>& flow);
+			static void Equations(std::vector<MaterialPoint*>& objs, size_t index, std::vector<double>& flow);
 
 			std::vector<std::vector<double>> k[4];
 			std::vector<MaterialPoint*> buf0, buf1, buf2, buf3;

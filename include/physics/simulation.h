@@ -49,6 +49,7 @@ namespace WDGS
 
 			void AddObject(Object::Ptr& obj);
 			void RemoveObject(Object::Ptr& obj);
+			std::vector<Object::Ptr>& GetObjects();
 
 			void AttachRenderer(SimulationRenderer::Ptr& renderer);
 			void DetachRenderer(SimulationRenderer::Ptr& renderer);

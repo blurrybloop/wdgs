@@ -18,7 +18,10 @@ namespace WDGS
 		double distanceToFocus;
 		double fov;
 		double aspect;
-		glm::dvec4 position;
+		glm::dvec3 position;
+
+		glm::dmat4 lookat;
+		glm::dmat4 projection;
 		glm::dmat4 transform;
 
 		Camera()
@@ -32,6 +35,8 @@ namespace WDGS
 
 		void UpdateTransform();
 		glm::dmat4& GetTransform();
+		glm::dmat4& GetLookat();
+		glm::dmat4& GetProjection();
 	};
 }
 

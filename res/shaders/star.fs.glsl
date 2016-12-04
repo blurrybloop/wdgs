@@ -2,7 +2,19 @@
 
 uniform samplerCube surf_emission;
 
-uniform vec3 cameraPos;
+layout(std140) uniform LightSource
+{
+	vec3 position;
+	vec3 ambient;
+	vec3 diffuse;
+	vec3 specular;
+} ls;
+
+layout(std140) uniform Camera
+{
+	vec3 position;
+
+} cam;
 
 in vec3 normal;
 

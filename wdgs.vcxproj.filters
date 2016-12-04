@@ -43,6 +43,9 @@
     <ClCompile Include="src\memmng.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\mesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\application.h">
@@ -102,6 +105,12 @@
       <Filter>Resource Files\Shaders</Filter>
     </None>
     <None Include="res\shaders\star.vs.glsl">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="res\shaders\rocky_athmo.fs.glsl">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="res\shaders\rocky_athmo.vs.glsl">
       <Filter>Resource Files\Shaders</Filter>
     </None>
   </ItemGroup>

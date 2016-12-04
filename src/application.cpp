@@ -45,30 +45,30 @@ namespace WDGS
 		sim->Recalc(time);
 	}
 
-	void Application::OnResize(GLFWwindow*, int w, int h)
+	void Application::OnResize(GLFWwindow* wnd, int w, int h)
 	{
 		glViewport(0, 0, w, h);
-		renderer->OnResize(w, h);
+		renderer->OnResize(wnd, w, h);
 	}
 
-	void Application::OnKey(GLFWwindow*, int key, int scancode, int action, int mode)
+	void Application::OnKey(GLFWwindow* w, int key, int scancode, int action, int mode)
 	{
-		renderer->OnKey(key, scancode, action, mode);
+		renderer->OnKey(w, key, scancode, action, mode);
 	}
 
-	void Application::OnMouseButton(GLFWwindow*, int button, int action, int mods)
+	void Application::OnMouseButton(GLFWwindow* w, int button, int action, int mods)
 	{
-		renderer->OnMouseButton(button, action, mods);
+		renderer->OnMouseButton(w, button, action, mods);
 	}
 
-	void Application::OnMouseMove(GLFWwindow*, double x, double y)
+	void Application::OnMouseMove(GLFWwindow* w, double x, double y)
 	{
-		renderer->OnMouseMove(x, y);
+		renderer->OnMouseMove(w, x, y);
 	}
 
-	void Application::OnMouseWheel(GLFWwindow*, double xoffset, double yoffset)
+	void Application::OnMouseWheel(GLFWwindow* w , double xoffset, double yoffset)
 	{
-		renderer->OnMouseWheel(xoffset, yoffset);
+		renderer->OnMouseWheel(w, xoffset, yoffset);
 
 	}
 
@@ -121,6 +121,7 @@ namespace WDGS
 			h = mode->height;
 		}
 
+		glfwWindowHint(GLFW_SAMPLES, 8);
 		glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
 
 		//создание окна

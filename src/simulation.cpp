@@ -57,6 +57,11 @@ namespace WDGS
 				renderers[i]->OnRemoveObject(obj);
 		}
 
+		std::vector<Object::Ptr>& Simulation::GetObjects()
+		{
+			return objects;
+		}
+
 		void Simulation::SetTimestep(double step)
 		{
 			timestep = step;

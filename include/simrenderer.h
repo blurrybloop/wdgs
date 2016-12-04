@@ -27,10 +27,16 @@ namespace WDGS
 		std::map<Physics::Object*, Graphics::Model::Ptr> models;
 		Camera::Ptr camera;
 		Physics::Object* lightSource;
+		double prevX, prevY;
+		GLuint focusIndex;
+
+		GLuint ubo;
 
 		SimulationRenderer();
-
 	public:
+		~SimulationRenderer();
+
+
 		Physics::Simulation* sim;
 
 		virtual void Render();
@@ -40,11 +46,11 @@ namespace WDGS
 		virtual void OnAttach(Physics::Simulation* sim);
 		virtual void OnDetach(Physics::Simulation* sim);
 
-		void OnResize(int w, int h);
-		void OnKey(int key, int scancode, int action, int mode);
-		void OnMouseButton(int button, int action, int mods);
-		void OnMouseMove(double x, double y);
-		void OnMouseWheel(double xoffset, double yoffset);
+		void OnResize(GLFWwindow*, int w, int h);
+		void OnKey(GLFWwindow*, int key, int scancode, int action, int mode);
+		void OnMouseButton(GLFWwindow*, int button, int action, int mods);
+		void OnMouseMove(GLFWwindow*, double x, double y);
+		void OnMouseWheel(GLFWwindow*, double xoffset, double yoffset);
 	};
 
 }

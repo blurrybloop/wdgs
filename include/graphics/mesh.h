@@ -126,6 +126,14 @@ namespace WDGS
 				}
 			}
 
+			virtual void Render()
+			{
+				BindTextures();
+
+				glBindVertexArray(GetVAO());
+				glDrawArrays(GL_TRIANGLES, 0, GetCount());
+			}
+
 			void ClearTextures()
 			{
 				textures.clear();
@@ -142,116 +150,9 @@ namespace WDGS
 		{
 			DECLARE_MEMMNG(Sphere)
 
-		public:
-			static Ptr Create(int ccw, int level)
-			{
-				Ptr ptr = Create();
-
-				ptr->ccw = ccw;
-				ptr->maxlevel = level;
-
-				glBindVertexArray(ptr->vao);
-
-				static vertex xplus{ {1.0f, 0.0f, 0.0f} };		/*  X */
-				static vertex xminus{ {-1.0f, 0.0f, 0.0f} };	/* -X */
-				static vertex yplus{ {0.0f, 1.0f, 0.0f} };		/*  Y */
-				static vertex yminus{ {0.0f, -1.0f, 0.0f} };	/* -Y */
-				static vertex zplus{ {0.0f, 0.0f, 1.0f} };		/*  Z */
-				static vertex zminus{ {0.0f, 0.0f, -1.0f} };	/* -Z */
-
-				/* Vertices of a unit octahedron */
-				static triangle octahedron[] = {
-					{ { xplus, zplus, yplus } },
-					{ { yplus, zplus, xminus } },
-					{ { xminus , zplus, yminus } },
-					{ { yminus , zplus, xplus } },
-					{ { xplus, yplus, zminus } },
-					{ { yplus, xminus , zminus } },
-					{ { xminus , yminus , zminus } },
-					{ { yminus , xplus, zminus } }
-				};
-
-
-				glGenBuffers(1, &ptr->vbo);
-				glBindBuffer(GL_ARRAY_BUFFER, ptr->vbo);
-
-				int step = 1;
-				for (int level = 1; level < ptr->maxlevel; ++level)
-					step *= 4;
-
-				ptr->count = sizeof(octahedron) * step;
-				glBufferData(GL_ARRAY_BUFFER, ptr->count, 0, GL_STATIC_DRAW);
-				triangle* buf = (triangle*)glMapBufferRange(GL_ARRAY_BUFFER, 0, ptr->count, GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_WRITE_BIT);
-				int size = sizeof(octahedron) / sizeof(octahedron[0]) * step;
-				for (int i = step - 1, j = 0; i < size; i += step, ++j)
-				{
-					if (ccw)
-					{
-						buf[i].v[2].position = octahedron[j].v[0].position;
-						buf[i].v[1].position = octahedron[j].v[1].position;
-						buf[i].v[0].position = octahedron[j].v[2].position;
-					}
-					else
-					{
-						buf[i].v[0].position = octahedron[j].v[0].position;
-						buf[i].v[1].position = octahedron[j].v[1].position;
-						buf[i].v[2].position = octahedron[j].v[2].position;
-					}
-				}
-
-				for (int level = 1; level < ptr->maxlevel; level++)
-				{
-					for (int i = step - 1, j = 0; i < size; i += step, ++j)
-					{
-						triangle *oldt = &buf[i], *newt = &buf[j*step + (step / 4) - 1];
-
-						glm::vec3 a, b, c;
-
-						a = glm::normalize(midpoint(oldt->v[0].position, oldt->v[2].position));
-						b = glm::normalize(midpoint(oldt->v[0].position, oldt->v[1].position));
-						c = glm::normalize(midpoint(oldt->v[1].position, oldt->v[2].position));
-
-						newt->v[0].position = oldt->v[0].position;
-						newt->v[1].position = b;
-						newt->v[2].position = a;
-
-						newt += step / 4;
-
-						newt->v[0].position = b;
-						newt->v[1].position = oldt->v[1].position;
-						newt->v[2].position = c;
-
-						newt += step / 4;
-
-						newt->v[0].position = a;
-						newt->v[1].position = b;
-						newt->v[2].position = c;
-
-						newt += step / 4;
-
-						newt->v[0].position = a;
-						newt->v[1].position = c;
-						newt->v[2].position = oldt->v[2].position;
-
-					}
-
-					step /= 4;
-				}
-
-				glUnmapBuffer(GL_ARRAY_BUFFER);
-			
-
-				glEnableVertexAttribArray(0);
-				glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (GLvoid*)0);	
-
-				glBindVertexArray(0);
-
-				return ptr;
-			}
-
 		protected:
-			int ccw, maxlevel;
-			GLuint vbo;
+			static GLuint vbo;
+			static GLuint instances;
 
 			struct vertex
 			{
@@ -275,14 +176,114 @@ namespace WDGS
 
 			Sphere() : Mesh()
 			{
-				ccw = 0; maxlevel = 0;
-				vbo = 0;
+				if (instances == 0)
+					glGenBuffers(1, &Sphere::vbo);
+
+				static vertex xplus{ { 1.0f, 0.0f, 0.0f } };		/*  X */
+				static vertex xminus{ { -1.0f, 0.0f, 0.0f } };	/* -X */
+				static vertex yplus{ { 0.0f, 1.0f, 0.0f } };		/*  Y */
+				static vertex yminus{ { 0.0f, -1.0f, 0.0f } };	/* -Y */
+				static vertex zplus{ { 0.0f, 0.0f, 1.0f } };		/*  Z */
+				static vertex zminus{ { 0.0f, 0.0f, -1.0f } };	/* -Z */
+
+				static triangle octahedron[] = {
+					{ { xplus, zplus, yplus } },
+					{ { yplus, zplus, xminus } },
+					{ { xminus , zplus, yminus } },
+					{ { yminus , zplus, xplus } },
+					{ { xplus, yplus, zminus } },
+					{ { yplus, xminus , zminus } },
+					{ { xminus , yminus , zminus } },
+					{ { yminus , xplus, zminus } }
+				};
+
+				glBindVertexArray(vao);
+				glBindBuffer(GL_ARRAY_BUFFER, Sphere::vbo);
+
+				int maxlevel = 6, ccw = 1;
+
+				int step = 1;
+				for (int level = 1; level < maxlevel; ++level)
+					step *= 4;
+
+				count = sizeof(octahedron) * step;
+
+				if (instances == 0)
+				{
+					glBufferData(GL_ARRAY_BUFFER, count, 0, GL_STATIC_DRAW);
+					triangle* buf = (triangle*)glMapBufferRange(GL_ARRAY_BUFFER, 0, count, GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_WRITE_BIT);
+					int size = sizeof(octahedron) / sizeof(octahedron[0]) * step;
+					for (int i = step - 1, j = 0; i < size; i += step, ++j)
+					{
+						if (ccw)
+						{
+							buf[i].v[2].position = octahedron[j].v[0].position;
+							buf[i].v[1].position = octahedron[j].v[1].position;
+							buf[i].v[0].position = octahedron[j].v[2].position;
+						}
+						else
+						{
+							buf[i].v[0].position = octahedron[j].v[0].position;
+							buf[i].v[1].position = octahedron[j].v[1].position;
+							buf[i].v[2].position = octahedron[j].v[2].position;
+						}
+					}
+
+					for (int level = 1; level < maxlevel; level++)
+					{
+						for (int i = step - 1, j = 0; i < size; i += step, ++j)
+						{
+							triangle *oldt = &buf[i], *newt = &buf[j*step + (step / 4) - 1];
+
+							glm::vec3 a, b, c;
+
+							a = glm::normalize(midpoint(oldt->v[0].position, oldt->v[2].position));
+							b = glm::normalize(midpoint(oldt->v[0].position, oldt->v[1].position));
+							c = glm::normalize(midpoint(oldt->v[1].position, oldt->v[2].position));
+
+							newt->v[0].position = oldt->v[0].position;
+							newt->v[1].position = b;
+							newt->v[2].position = a;
+
+							newt += step / 4;
+
+							newt->v[0].position = b;
+							newt->v[1].position = oldt->v[1].position;
+							newt->v[2].position = c;
+
+							newt += step / 4;
+
+							newt->v[0].position = a;
+							newt->v[1].position = b;
+							newt->v[2].position = c;
+
+							newt += step / 4;
+
+							newt->v[0].position = a;
+							newt->v[1].position = c;
+							newt->v[2].position = oldt->v[2].position;
+
+						}
+
+						step /= 4;
+					}
+
+					glUnmapBuffer(GL_ARRAY_BUFFER);
+				}
+
+				glEnableVertexAttribArray(0);
+				glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (GLvoid*)0);
+
+				glBindVertexArray(0);
+
+				++instances;
 			}
 
 			public:
 			~Sphere()
 			{
-				glDeleteBuffers(1, &vbo);
+				if (--instances == 0)
+					glDeleteBuffers(1, &Sphere::vbo);
 			}
 		};
 	}

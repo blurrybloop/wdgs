@@ -113,5 +113,17 @@
     <None Include="res\shaders\rocky_athmo.vs.glsl">
       <Filter>Resource Files\Shaders</Filter>
     </None>
+    <None Include="res\shaders\hdr.fs.glsl">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="res\shaders\hdr.vs.glsl">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="res\shaders\bloom.fs.glsl">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="res\shaders\blur.fs.glsl">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

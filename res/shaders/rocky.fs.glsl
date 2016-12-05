@@ -25,17 +25,9 @@ in VS_OUT
 	vec3 fragPos;
 } fs_in;
 
-struct Light {
-	vec3 position;
 
-	vec3 ambient;
-	vec3 diffuse;
-	vec3 specular;
-};
-
-uniform Light light;
-
-out vec4 color;
+layout(location = 0) out vec4 fragColor;
+layout(location = 1) out vec4 brightColor;
 
 void main(void)
 {
@@ -60,5 +52,6 @@ void main(void)
 	//Emission
 	vec4 emission = pow(1.0 - diff, 16) * texture(surf_emission, fs_in.normal);
 
-	color = ambient + diffuse + emission;
+	fragColor = ambient + diffuse + emission;
+	brightColor = vec4(0.0, 0.0, 0.0, 1.0);
 }

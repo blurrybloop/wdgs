@@ -47,6 +47,10 @@
     <ClInclude Include="include\simrenderer.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="res\shaders\bloom.fs.glsl" />
+    <None Include="res\shaders\blur.fs.glsl" />
+    <None Include="res\shaders\hdr.fs.glsl" />
+    <None Include="res\shaders\hdr.vs.glsl" />
     <None Include="res\shaders\rocky.fs.glsl" />
     <None Include="res\shaders\rocky.vs.glsl" />
     <None Include="res\shaders\rocky_athmo.fs.glsl" />

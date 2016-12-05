@@ -30,7 +30,20 @@ namespace WDGS
 		double prevX, prevY;
 		GLuint focusIndex;
 
+
 		GLuint ubo;
+		GLuint fboHdr;
+		GLuint rboDepth;
+
+		GLuint fboPingpong[2];
+		Graphics::Texture::Ptr pingpongColorbuffers[2];
+
+		Graphics::Texture::Ptr colorBuffers[2];
+
+		Graphics::Program::Ptr blurProg;
+		Graphics::Program::Ptr bloomProg;
+
+		//Graphics::Quad::Ptr quad;
 
 		SimulationRenderer();
 	public:

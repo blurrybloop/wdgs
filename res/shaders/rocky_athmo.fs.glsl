@@ -22,7 +22,8 @@ in VS_OUT
 	vec3 fragPos;
 } fs_in;
 
-out vec4 color;
+layout(location = 0) out vec4 fragColor;
+layout(location = 1) out vec4 brightColor;
 
 void main(void)
 {
@@ -46,6 +47,7 @@ void main(void)
 	//float epsilon = outerAngle - innerAngle;
 	//float intensity = clamp((outerAngle - theta) / epsilon, 0.0, 1.0);
 
-	color = ambient + diffuse;
+	fragColor = ambient + diffuse;
+	brightColor = vec4(0.0, 0.0, 0.0, 1.0);
 	//color.a *= intensity;
 }

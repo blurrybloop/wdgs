@@ -16,6 +16,13 @@ namespace WDGS
 			DECLARE_MEMMNG(Texture)
 
 		public:
+			static Ptr Create(GLuint target)
+			{
+				Ptr ptr = Create();
+				ptr->target = target;
+				return ptr;
+			}
+
 			static Ptr Create(const GLchar* path)
 			{
 				Ptr ptr = Create();
@@ -29,7 +36,6 @@ namespace WDGS
 				gli::gl::format const fmt = GL.translate(tex.format(), tex.swizzles());
 				ptr->target = GL.translate(tex.target());
 
-				glGenTextures(1, &ptr->id);
 				glBindTexture(ptr->target, *ptr);
 
 				glTexParameteri(ptr->target, GL_TEXTURE_BASE_LEVEL, 0);
@@ -121,7 +127,7 @@ namespace WDGS
 			GLuint id;
 			GLenum target;
 
-			Texture() { id = 0; target = 0; }
+			Texture() { glGenTextures(1, &id); target = 0; }
 
 		public:
 

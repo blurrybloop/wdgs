@@ -198,7 +198,13 @@ namespace WDGS
 				//glUniform3f(camLoc2, (GLfloat)cam->position.x, (GLfloat)cam->position.y, (GLfloat)cam->position.z);
 				glUniform4fv(athmoLoc, 1, glm::value_ptr(athmoColor));
 				
+
+				glEnable(GL_BLEND);
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 				meshes[1]->Render();
+
+				glDisable(GL_BLEND);
 			}
 		};
 

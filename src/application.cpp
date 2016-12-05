@@ -121,7 +121,6 @@ namespace WDGS
 			h = mode->height;
 		}
 
-		glfwWindowHint(GLFW_SAMPLES, 8);
 		glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
 
 		//создание окна

@@ -19,6 +19,20 @@ namespace WDGS
 
 		glBindBufferRange(GL_UNIFORM_BUFFER, 0, ubo, 0, 64);
 		glBindBufferRange(GL_UNIFORM_BUFFER, 1, ubo, 64, 16);
+
+		environment = Graphics::Texture::Create("res/environments/milky.dds");
+
+		Graphics::Shader::Ptr vs = Graphics::Shader::CreateFromFile(GL_VERTEX_SHADER, "res/shaders/environment.vs.glsl");
+		Graphics::Shader::Ptr fs = Graphics::Shader::CreateFromFile(GL_FRAGMENT_SHADER, "res/shaders/environment.fs.glsl");
+
+		Graphics::Program::Ptr p = Graphics::Program::Create();
+		p->AddShader(vs);
+		p->AddShader(fs);
+		p->Link();
+
+		envCube = Graphics::Cube::Create();
+		envCube->SetProgram(p);
+		envCube->AddTexture(environment, "environment");
 	}
 
 	SimulationRenderer::~SimulationRenderer()
@@ -26,13 +40,26 @@ namespace WDGS
 		glDeleteBuffers(1, &ubo);
 	}
 
+	void SimulationRenderer::RenderEnvironment()
+	{
+		Graphics::Program::Ptr& prog = envCube->GetProgram();
+		static GLuint vpLoc = glGetUniformLocation(*prog, "vp");
+
+		glm::mat4 vp = glm::mat4(camera->GetProjection()) * glm::mat4(glm::mat3(camera->GetLookat()));
+		prog->Use();
+		glUniformMatrix4fv(vpLoc, 1, GL_FALSE, glm::value_ptr(vp));
+
+		envCube->Render();
+	}
+
 	void SimulationRenderer::Render()
 	{
-		GLfloat color[3] = { 0.0f, 0.0f, 0.0f };
-		GLfloat ones[3] = { 1.0f, 1.0f, 1.0f };
+		camera->UpdateTransform();
 
-		glClearBufferfv(GL_COLOR, 0, color);
-		glClearBufferfv(GL_DEPTH, 0, ones);
+		GLfloat color[3] = { 0.0f, 0.0f, 0.0f };
+
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		glEnable(GL_MULTISAMPLE);
 		glEnable(GL_DEPTH_TEST);
@@ -46,8 +73,6 @@ namespace WDGS
 		l.diffuse = glm::vec3(1.0f, 0.9f, 0.9f);
 		l.specular = glm::vec3(0.4f, 0.3f, 0.3f);
 
-		camera->UpdateTransform();
-
 		glBufferSubData(GL_UNIFORM_BUFFER, 0, 16, glm::value_ptr(l.position));
 		glBufferSubData(GL_UNIFORM_BUFFER, 16, 16, glm::value_ptr(l.ambient));
 		glBufferSubData(GL_UNIFORM_BUFFER, 32, 16, glm::value_ptr(l.diffuse));
@@ -60,6 +85,18 @@ namespace WDGS
 		{
 			it->second->Render(camera, l);
 		}
+
+
+
+		glDisable(GL_MULTISAMPLE);
+		glDisable(GL_CULL_FACE);
+		glDisable(GL_BLEND);
+
+		glDepthFunc(GL_LEQUAL);
+
+		RenderEnvironment();
+
+		glDepthFunc(GL_LESS);
 
 	}
 

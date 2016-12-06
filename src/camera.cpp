@@ -45,7 +45,7 @@ namespace WDGS
 		position = glm::translate(glm::dmat4(1.0), focusedOn->worldPosition) * rotZ * rotY * rotX * glm::dvec4(0.0, 0.0, distanceToFocus, 1.0);;
 
 		lookat = glm::lookAt(position, focusedOn->worldPosition, up);
-		projection = glm::perspective(fov, aspect, 1000000., 1E+20);
+		projection = glm::perspective(fov, aspect, 100000.0, 5E+11);
 		transform = projection * lookat;
 
 	}

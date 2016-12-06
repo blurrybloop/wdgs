@@ -47,6 +47,8 @@
     <ClInclude Include="include\simrenderer.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="res\shaders\environment.fs.glsl" />
+    <None Include="res\shaders\environment.vs.glsl" />
     <None Include="res\shaders\rocky.fs.glsl" />
     <None Include="res\shaders\rocky.vs.glsl" />
     <None Include="res\shaders\rocky_athmo.fs.glsl" />

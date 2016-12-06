@@ -35,7 +35,7 @@ namespace WDGS
 
 
 		protected:
-			std::vector<Mesh::Ptr> meshes;
+			std::vector<MeshBase::Ptr> meshes;
 			Physics::Object::Ptr object;
 
 		public:
@@ -136,21 +136,11 @@ namespace WDGS
 				static GLuint mvpLoc = glGetUniformLocation(*renderProg1, "mvp");
 				static GLuint camLoc = glGetUniformBlockIndex(*renderProg1, "Camera");
 				static GLuint lightPos = glGetUniformBlockIndex(*renderProg1, "LightSource");
-				//static GLuint lightAmbientPos = glGetUniformLocation(*renderProg1, "light.ambient");
-				//static GLuint lightDiffPos = glGetUniformLocation(*renderProg1, "light.diffuse");
-				//static GLuint lightSpecPos = glGetUniformLocation(*renderProg1, "light.specular");
-
 				static GLuint modelLoc2 = glGetUniformLocation(*renderProg2, "model");
 				static GLuint mvpLoc2 = glGetUniformLocation(*renderProg2, "mvp");
 
 				static GLuint camLoc2 = glGetUniformBlockIndex(*renderProg1, "Camera");
 				static GLuint lightPos2 = glGetUniformBlockIndex(*renderProg1, "LightSource");
-
-			/*	static GLuint camLoc2 = glGetUniformLocation(*renderProg2, "cameraPos");
-				static GLuint lightPosLoc2 = glGetUniformLocation(*renderProg2, "light.position");
-				static GLuint lightAmbientPos2 = glGetUniformLocation(*renderProg2, "light.ambient");
-				static GLuint lightDiffPos2 = glGetUniformLocation(*renderProg2, "light.diffuse");
-				static GLuint lightSpecPos2 = glGetUniformLocation(*renderProg2, "light.specular");*/
 				static GLuint athmoLoc = glGetUniformLocation(*renderProg2, "athmoColor");
 
 				Physics::Planet* planet = (Physics::Planet*)object.get();
@@ -172,12 +162,6 @@ namespace WDGS
 				glUniformBlockBinding(*renderProg1, lightPos, 0);
 				glUniformBlockBinding(*renderProg1, camLoc, 1);
 
-				/*glUniform3fv(lightPosLoc, 1, glm::value_ptr(light.position));
-				glUniform3fv(lightAmbientPos, 1, glm::value_ptr(light.ambient));
-				glUniform3fv(lightDiffPos, 1, glm::value_ptr(light.diffuse));
-				glUniform3fv(lightSpecPos, 1, glm::value_ptr(light.specular));
-				glUniform3f(camLoc, (GLfloat)cam->position.x, (GLfloat)cam->position.y, (GLfloat)cam->position.z);*/
-
 				meshes[0]->Render();
 
 				model = glm::scale(model, glm::dvec3(1.05, 1.05, 1.05));
@@ -191,11 +175,6 @@ namespace WDGS
 				glUniformBlockBinding(*renderProg2, lightPos2, 0);
 				glUniformBlockBinding(*renderProg2, camLoc2, 1);
 
-				/*glUniform3fv(lightPosLoc2, 1, glm::value_ptr(light.position));
-				glUniform3fv(lightAmbientPos2, 1, glm::value_ptr(light.ambient));
-				glUniform3fv(lightDiffPos2, 1, glm::value_ptr(light.diffuse));
-				glUniform3fv(lightSpecPos2, 1, glm::value_ptr(light.specular));*/
-				//glUniform3f(camLoc2, (GLfloat)cam->position.x, (GLfloat)cam->position.y, (GLfloat)cam->position.z);
 				glUniform4fv(athmoLoc, 1, glm::value_ptr(athmoColor));
 				
 				meshes[1]->Render();

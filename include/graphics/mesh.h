@@ -17,9 +17,9 @@ namespace WDGS
 {
 	namespace Graphics
 	{
-		class Mesh 
+		class MeshBase
 		{
-			DECLARE_MEMMNG(Mesh)
+			DECLARE_MEMMNG_NOCREATE(MeshBase)
 
 		protected:
 			struct TexEntry
@@ -30,25 +30,18 @@ namespace WDGS
 			};
 
 			std::vector<TexEntry> textures;
-			GLuint vao;
-			GLsizei count;
 
 			Program::Ptr renderProg;
 
-			Mesh()
+			MeshBase()
 			{
-				glGenVertexArrays(1, &this->vao);
-
-				this->count = 0;
+				renderProg = 0;
 			}
 
 		public:
-			GLuint GetVAO()
-			{
-				return this->vao;
-			}
-
-			GLsizei GetCount() { return count; }
+			virtual GLuint GetVAO() = 0;
+			virtual GLsizei GetCount() = 0;
+			virtual GLenum GetMode() = 0;
 
 			void BindTextures()
 			{
@@ -67,7 +60,7 @@ namespace WDGS
 				renderProg = prog;
 				for (size_t i = 0; i < textures.size(); ++i)
 				{
-					textures[i].location = glGetUniformLocation(*prog, textures[i].sampler.c_str());					
+					textures[i].location = glGetUniformLocation(*prog, textures[i].sampler.c_str());
 				}
 			}
 
@@ -103,9 +96,9 @@ namespace WDGS
 				struct dirent *ent;
 				char fullname[PATH_MAX];
 
-				if ((dir = opendir(path)) != NULL) 
+				if ((dir = opendir(path)) != NULL)
 				{
-					while ((ent = readdir(dir)) != NULL) 
+					while ((ent = readdir(dir)) != NULL)
 					{
 						if (ent->d_type == DT_REG)
 						{
@@ -131,7 +124,7 @@ namespace WDGS
 				BindTextures();
 
 				glBindVertexArray(GetVAO());
-				glDrawArrays(GL_TRIANGLES, 0, GetCount());
+				glDrawArrays(GetMode(), 0, GetCount());
 			}
 
 			void ClearTextures()
@@ -139,20 +132,166 @@ namespace WDGS
 				textures.clear();
 			}
 
-			virtual ~Mesh()
+			virtual ~MeshBase() {}
+		};
+
+		class Quad : public MeshBase
+		{
+			DECLARE_MEMMNG(Quad)
+
+		protected:
+			static GLuint vao;
+			static GLuint vbo;
+			static GLuint instances;
+
+			Quad() : MeshBase()
 			{
-				glDeleteVertexArrays(1, &this->vao);
+				if (instances == 0)
+				{
+					glGenVertexArrays(1, &Quad::vao);
+					glGenBuffers(1, &Quad::vbo);
+
+					glm::vec3 vertices[4] = { 
+						glm::vec3(-1.0f, -1.0f, 1.0f),
+						glm::vec3(1.0f, -1.0f, 1.0f),
+						glm::vec3(-1.0f, 1.0f, 1.0f),
+						glm::vec3(1.0f, 1.0f, 1.0f) 
+					};
+
+					glBindVertexArray(Quad::vao);
+					glBindBuffer(GL_ARRAY_BUFFER, Quad::vbo);
+					glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+					glEnableVertexAttribArray(0);
+					glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertices[0]), (GLvoid*)0);
+
+					glBindVertexArray(0);
+					glBindBuffer(GL_ARRAY_BUFFER, 0);
+				}
+
+				++instances;
+			}
+
+		public:
+
+			virtual GLuint GetVAO() { return Quad::vao; }
+			virtual GLsizei GetCount() { return 4; }
+			virtual GLenum GetMode() { return GL_TRIANGLE_STRIP; }
+
+			virtual ~Quad()
+			{
+				if (instances == 1)
+				{
+					glDeleteVertexArrays(1, &Quad::vao);
+					glDeleteBuffers(1, &Quad::vbo);
+				}
+
+				if (instances > 0) --instances;
 			}
 		};
 
+		class Cube : public MeshBase
+		{
+			DECLARE_MEMMNG(Cube)
 
-		class Sphere : public Mesh
+		protected:
+			static GLuint vao;
+			static GLuint vbo;
+			static GLuint instances;
+
+			Cube() : MeshBase()
+			{
+				if (instances == 0)
+				{
+					glGenVertexArrays(1, &Cube::vao);
+					glGenBuffers(1, &Cube::vbo);
+
+					GLfloat vertices[] = {
+						// Positions          
+						-1.0f, 1.0f, -1.0f,
+						-1.0f, -1.0f, -1.0f,
+						1.0f, -1.0f, -1.0f,
+						1.0f, -1.0f, -1.0f,
+						1.0f, 1.0f, -1.0f,
+						-1.0f, 1.0f, -1.0f,
+
+						-1.0f, -1.0f, 1.0f,
+						-1.0f, -1.0f, -1.0f,
+						-1.0f, 1.0f, -1.0f,
+						-1.0f, 1.0f, -1.0f,
+						-1.0f, 1.0f, 1.0f,
+						-1.0f, -1.0f, 1.0f,
+
+						1.0f, -1.0f, -1.0f,
+						1.0f, -1.0f, 1.0f,
+						1.0f, 1.0f, 1.0f,
+						1.0f, 1.0f, 1.0f,
+						1.0f, 1.0f, -1.0f,
+						1.0f, -1.0f, -1.0f,
+
+						-1.0f, -1.0f, 1.0f,
+						-1.0f, 1.0f, 1.0f,
+						1.0f, 1.0f, 1.0f,
+						1.0f, 1.0f, 1.0f,
+						1.0f, -1.0f, 1.0f,
+						-1.0f, -1.0f, 1.0f,
+
+						-1.0f, 1.0f, -1.0f,
+						1.0f, 1.0f, -1.0f,
+						1.0f, 1.0f, 1.0f,
+						1.0f, 1.0f, 1.0f,
+						-1.0f, 1.0f, 1.0f,
+						-1.0f, 1.0f, -1.0f,
+
+						-1.0f, -1.0f, -1.0f,
+						-1.0f, -1.0f, 1.0f,
+						1.0f, -1.0f, -1.0f,
+						1.0f, -1.0f, -1.0f,
+						-1.0f, -1.0f, 1.0f,
+						1.0f, -1.0f, 1.0f
+					};
+
+					glBindVertexArray(Cube::vao);
+					glBindBuffer(GL_ARRAY_BUFFER, Cube::vbo);
+					glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+					glEnableVertexAttribArray(0);
+					glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+
+					glBindVertexArray(0);
+					glBindBuffer(GL_ARRAY_BUFFER, 0);
+				}
+
+				++instances;
+			}
+
+		public:
+
+			virtual GLuint GetVAO() { return Cube::vao; }
+			virtual GLsizei GetCount() { return 36; }
+			virtual GLenum GetMode() { return GL_TRIANGLES; }
+
+			virtual ~Cube()
+			{
+				if (instances == 1)
+				{
+					glDeleteVertexArrays(1, &Cube::vao);
+					glDeleteBuffers(1, &Cube::vbo);
+				}
+
+				if (instances > 0) --instances;
+			}
+		};
+
+		class Sphere : public MeshBase
 		{
 			DECLARE_MEMMNG(Sphere)
 
 		protected:
+			static GLuint vao;
 			static GLuint vbo;
 			static GLuint instances;
+			static GLsizei count;
 
 			struct vertex
 			{
@@ -173,12 +312,8 @@ namespace WDGS
 				return res;
 			}
 
-
-			Sphere() : Mesh()
+			Sphere() : MeshBase()
 			{
-				if (instances == 0)
-					glGenBuffers(1, &Sphere::vbo);
-
 				static vertex xplus{ { 1.0f, 0.0f, 0.0f } };		/*  X */
 				static vertex xminus{ { -1.0f, 0.0f, 0.0f } };	/* -X */
 				static vertex yplus{ { 0.0f, 1.0f, 0.0f } };		/*  Y */
@@ -197,19 +332,23 @@ namespace WDGS
 					{ { yminus , xplus, zminus } }
 				};
 
-				glBindVertexArray(vao);
-				glBindBuffer(GL_ARRAY_BUFFER, Sphere::vbo);
-
-				int maxlevel = 6, ccw = 1;
-
-				int step = 1;
-				for (int level = 1; level < maxlevel; ++level)
-					step *= 4;
-
-				count = sizeof(octahedron) * step;
-
 				if (instances == 0)
 				{
+					glGenVertexArrays(1, &Sphere::vao);
+					glGenBuffers(1, &Sphere::vbo);
+
+					int maxlevel = 6, ccw = 1;
+
+					int step = 1;
+					for (int level = 1; level < maxlevel; ++level)
+						step *= 4;
+
+					count = sizeof(octahedron) * step;
+
+
+					glBindVertexArray(Sphere::vao);
+					glBindBuffer(GL_ARRAY_BUFFER, Sphere::vbo);
+
 					glBufferData(GL_ARRAY_BUFFER, count, 0, GL_STATIC_DRAW);
 					triangle* buf = (triangle*)glMapBufferRange(GL_ARRAY_BUFFER, 0, count, GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_WRITE_BIT);
 					int size = sizeof(octahedron) / sizeof(octahedron[0]) * step;
@@ -269,21 +408,31 @@ namespace WDGS
 					}
 
 					glUnmapBuffer(GL_ARRAY_BUFFER);
+
+					glEnableVertexAttribArray(0);
+					glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (GLvoid*)0);
+
+					glBindVertexArray(0);
 				}
-
-				glEnableVertexAttribArray(0);
-				glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (GLvoid*)0);
-
-				glBindVertexArray(0);
 
 				++instances;
 			}
 
-			public:
-			~Sphere()
+		public:
+
+			virtual GLuint GetVAO() { return Sphere::vao; }
+			virtual GLsizei GetCount() { return Sphere::count; }
+			virtual GLenum GetMode() { return GL_TRIANGLES; }
+
+			virtual ~Sphere()
 			{
-				if (--instances == 0)
+				if (instances == 1)
+				{
+					glDeleteVertexArrays(1, &Sphere::vao);
 					glDeleteBuffers(1, &Sphere::vbo);
+				}
+
+				if (instances > 0) --instances;
 			}
 		};
 	}

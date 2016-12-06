@@ -23,7 +23,7 @@ namespace WDGS
 		DECLARE_MEMMNG(SimulationRenderer)
 
 	protected:
-		Graphics::Texture::Ptr background;
+		Graphics::Texture::Ptr environment;
 		std::map<Physics::Object*, Graphics::Model::Ptr> models;
 		Camera::Ptr camera;
 		Physics::Object* lightSource;
@@ -31,6 +31,7 @@ namespace WDGS
 		GLuint focusIndex;
 
 		GLuint ubo;
+		Graphics::Cube::Ptr envCube;
 
 		SimulationRenderer();
 	public:
@@ -38,6 +39,8 @@ namespace WDGS
 
 
 		Physics::Simulation* sim;
+
+		virtual void RenderEnvironment();
 
 		virtual void Render();
 		virtual void OnAddObject(Physics::Object::Ptr& obj);

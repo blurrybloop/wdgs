@@ -14,7 +14,6 @@
 #include "graphics/texture.h"
 #include "graphics/mesh.h"
 #include "physics/simulation.h"
-#include "simrenderer.h"
 
 namespace WDGS
 {
@@ -25,9 +24,7 @@ namespace WDGS
 		static GLFWwindow* window;
 		static bool running;
 
-		static Physics::Simulation::Ptr sim;
-		static SimulationRenderer::Ptr renderer;
-
+		static Simulation::Ptr sim;
 
 		static void OnError(const char* message);
 		static void OnRender(double time);

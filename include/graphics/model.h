@@ -14,6 +14,7 @@
 #include "physics/object.h"
 #include "camera.h"
 
+#include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -21,7 +22,7 @@ namespace WDGS
 {
 	namespace Graphics
 	{
-		class Model
+		class Model : public Saveable
 		{
 		public:
 			typedef std::shared_ptr<Model> Ptr;
@@ -32,11 +33,56 @@ namespace WDGS
 			};
 			
 			int type;
+			std::string resName;
+			Object::Ptr object;
 
+			virtual void Save(std::ostream& os)
+			{
+				size_t s = resName.length();
+				os.write((char*)&s, sizeof(s));
+				os.write(resName.c_str(), resName.length());
+
+				object->Save(os);
+			}
+
+			virtual void Load(std::istream& is)
+			{
+				size_t len;
+				//is >> len;
+				is.read((char*)&len, sizeof(len));
+				resName.resize(len);
+				is.read((char*)resName.c_str(), len);
+
+				LoadModelResource(resName.c_str(), false);
+				object->Load(is);
+			}
 
 		protected:
 			std::vector<MeshBase::Ptr> meshes;
-			Physics::Object::Ptr object;
+
+			Model()
+			{
+				this->type = 0;
+			}
+
+			virtual void LoadModelResource(const GLchar* name, bool withObject) = 0;
+
+			glm::dmat4 GetModelMatrix()
+			{
+				glm::dvec4 axis = glm::rotate(glm::dmat4(1.0), object->axisInclination.x, glm::dvec3(1.0, 0.0, 0.0)) *
+					glm::rotate(glm::dmat4(1.0), object->axisInclination.y, glm::dvec3(0.0, 1.0, 0.0)) *
+					glm::rotate(glm::dmat4(1.0), object->axisInclination.z, glm::dvec3(0.0, 0.0, 1.0)) *
+					glm::dvec4(0.0, 1.0, 0.0, 1.0);
+
+
+				return 
+					glm::scale(
+						glm::rotate(
+							glm::translate(
+								glm::dmat4(1.0), object->worldPosition),
+							object->rotAngle, glm::dvec3(axis)),
+						glm::dvec3(object->type & Object::Spheric ? std::static_pointer_cast<SphericObject>(object)->radius : 1.0));
+			}
 
 		public:
 			virtual void Render(Camera::Ptr& cam, Light& light) = 0;
@@ -48,71 +94,73 @@ namespace WDGS
 			DECLARE_MEMMNG(RockyModel)
 
 		public:
-			static Ptr Create(const GLchar* name, Physics::Planet::Ptr& obj)
+			static Ptr Create(const GLchar* name, bool withObject)
 			{
-				char path[PATH_MAX];
-				sprintf(path, "res/models/%s", name);
-
-				struct stat info;
-				if (stat(path, &info) != 0 || !(info.st_mode & S_IFDIR))
-					return Ptr();
-
 				Ptr ptr = Create();
 
-				Sphere::Ptr sphereMesh = Sphere::Create();
-
-				sprintf(path, "res/models/%s/textures/%s", name, "surf_diffuse.dds");
-				Graphics::Texture::Ptr tex = Graphics::Texture::Create(path);
-				sphereMesh->AddTexture(tex, "surf_diffuse");
-				sprintf(path, "res/models/%s/textures/%s", name, "surf_specular.dds");
-				tex = Graphics::Texture::Create(path);
-				sphereMesh->AddTexture(tex, "surf_specular");
-				sprintf(path, "res/models/%s/textures/%s", name, "surf_emission.dds");
-				tex = Graphics::Texture::Create(path);
-				sphereMesh->AddTexture(tex, "surf_emission");
-				sprintf(path, "res/models/%s/textures/%s", name, "surf_clouds.dds");
-				tex = Graphics::Texture::Create(path);
-				sphereMesh->AddTexture(tex, "surf_clouds");
-
-
-				Program::Ptr prog = Program::Create();
-
-				Shader::Ptr vs = Shader::CreateFromFile(GL_VERTEX_SHADER, "res/shaders/rocky.vs.glsl");
-				Shader::Ptr fs = Shader::CreateFromFile(GL_FRAGMENT_SHADER, "res/shaders/rocky.fs.glsl");
-
-				prog->AddShader(vs);
-				prog->AddShader(fs);
-				prog->Link();
-
-				sphereMesh->SetProgram(prog);
-
-				ptr->meshes.push_back(sphereMesh);
-				ptr->object = obj;
-
-				sphereMesh = Sphere::Create();
-
-				prog = Program::Create();
-
-				vs = Shader::CreateFromFile(GL_VERTEX_SHADER, "res/shaders/rocky_athmo.vs.glsl");
-				fs = Shader::CreateFromFile(GL_FRAGMENT_SHADER, "res/shaders/rocky_athmo.fs.glsl");
-
-				prog->AddShader(vs);
-				prog->AddShader(fs);
-				prog->Link();
-
-				sphereMesh->SetProgram(prog);
-				ptr->meshes.push_back(sphereMesh);
+				ptr->LoadModelResource(name, withObject);
 
 				return ptr;
 			}
 
 		protected:
 
+			virtual void LoadModelResource(const GLchar* name, bool withObject)
+			{
+				resName = name;
+
+				if (withObject)
+				{
+					WDGS::Planet *planet = (WDGS::Planet*)object.get();
+
+					planet->name = Resources::GetModelString(name, this->type, "name_ru");
+					planet->mass = Resources::GetModelDouble(name, this->type, "mass");
+					planet->radius = Resources::GetModelDouble(name, this->type, "radius");
+					planet->axisInclination = Resources::GetModelVec3(name, this->type, "inclination");
+					planet->rotPeriod = Resources::GetModelDouble(name, this->type, "rot_period");
+				}
+
+				athmoColor = Resources::GetModelVec4(name, this->type, "athmo_color");
+
+				Sphere::Ptr sphereMesh = Sphere::Create();
+
+				std::string path = Resources::GetModelPath() + Resources::GetModelString(name, this->type, "tex_path");
+				sphereMesh->AddTexturesFromFolder(path.c_str());
+
+				Program::Ptr prog = Program::Create();
+
+				Shader::Ptr vs = Shader::CreateFromResource(GL_VERTEX_SHADER, "rocky");
+				Shader::Ptr fs = Shader::CreateFromResource(GL_FRAGMENT_SHADER, "rocky");
+
+				prog->AddShader(vs);
+				prog->AddShader(fs);
+				prog->Link();
+
+				sphereMesh->SetProgram(prog);
+
+				this->meshes.push_back(sphereMesh);
+
+				sphereMesh = Sphere::Create();
+
+				prog = Program::Create();
+
+				vs = Shader::CreateFromResource(GL_VERTEX_SHADER, "rocky_athmo");
+				fs = Shader::CreateFromResource(GL_FRAGMENT_SHADER, "rocky_athmo");
+
+				prog->AddShader(vs);
+				prog->AddShader(fs);
+				prog->Link();
+
+				sphereMesh->SetProgram(prog);
+				this->meshes.push_back(sphereMesh);
+			}
+
 			glm::vec4 athmoColor;
 
-			RockyModel()
+			RockyModel() : Model()
 			{
 				type |= ModelType::Rocky;
+				object = Planet::Create();
 			}
 
 		public:
@@ -126,6 +174,17 @@ namespace WDGS
 			{
 				return athmoColor;
 			}
+
+			virtual void Save(std::ostream& os)
+			{
+				Model::Save(os);
+			}
+
+			virtual void Load(std::istream& is)
+			{
+				Model::Load(is);
+			}
+
 
 			virtual void Render(Camera::Ptr& cam, Light& light)
 			{
@@ -143,15 +202,9 @@ namespace WDGS
 				static GLuint lightPos2 = glGetUniformBlockIndex(*renderProg1, "LightSource");
 				static GLuint athmoLoc = glGetUniformLocation(*renderProg2, "athmoColor");
 
-				Physics::Planet* planet = (Physics::Planet*)object.get();
+				Planet* planet = (Planet*)object.get();
 
-				glm::dmat4 model =
-					glm::scale(
-						glm::rotate(
-							glm::translate(
-								glm::dmat4(1.0), planet->worldPosition),
-							planet->rotAngle, glm::dvec3(0.0, 1.0, 0.0)),
-						glm::dvec3(planet->radius));
+				glm::dmat4 model = GetModelMatrix();
 
 				glm::mat4 mvp = glm::mat4(cam->GetTransform() * model);
 
@@ -187,26 +240,49 @@ namespace WDGS
 			DECLARE_MEMMNG(StarModel)
 
 		public:
-			static Ptr Create(const GLchar* name, Physics::Star::Ptr& obj)
+			static Ptr Create(const GLchar* name, bool withObject)
 			{
-				char path[PATH_MAX];
-				sprintf(path, "res/models/%s", name);
-
-				struct stat info;
-				if (stat(path, &info) != 0 || !(info.st_mode & S_IFDIR))
-					return Ptr();
-
 				Ptr ptr = Create();
+				ptr->LoadModelResource(name, withObject);
+				return ptr;
+			}
+
+			virtual void Save(std::ostream& os)
+			{
+				Model::Save(os);
+			}
+
+			virtual void Load(std::istream& is)
+			{
+				Model::Load(is);
+			}
+
+		protected:
+
+			virtual void LoadModelResource(const GLchar* name, bool withObject)
+			{
+				this->resName = name;
+
+				if (withObject)
+				{
+					WDGS::Star *star = (WDGS::Star*)this->object.get();
+
+					star->name = Resources::GetModelString(name, this->type, "name_ru");
+					star->mass = Resources::GetModelDouble(name, this->type, "mass");
+					star->radius = Resources::GetModelDouble(name, this->type, "radius");
+					star->axisInclination = Resources::GetModelVec3(name, this->type, "inclination");
+					star->rotPeriod = Resources::GetModelDouble(name, this->type, "rot_period");
+				}
 
 				Sphere::Ptr sphereMesh = Sphere::Create();
 
-				sprintf(path, "res/models/%s/textures", name);
-				sphereMesh->AddTexturesFromFolder(path);
+				std::string path = Resources::GetModelPath() + Resources::GetModelString(name, this->type, "tex_path");
+				sphereMesh->AddTexturesFromFolder(path.c_str());
 
 				Program::Ptr prog = Program::Create();
 
-				Shader::Ptr vs = Shader::CreateFromFile(GL_VERTEX_SHADER, "res/shaders/star.vs.glsl");
-				Shader::Ptr fs = Shader::CreateFromFile(GL_FRAGMENT_SHADER, "res/shaders/star.fs.glsl");
+				Shader::Ptr vs = Shader::CreateFromResource(GL_VERTEX_SHADER, "star");
+				Shader::Ptr fs = Shader::CreateFromResource(GL_FRAGMENT_SHADER, "star");
 
 				prog->AddShader(vs);
 				prog->AddShader(fs);
@@ -214,21 +290,17 @@ namespace WDGS
 
 				sphereMesh->SetProgram(prog);
 
-				ptr->meshes.push_back(sphereMesh);
-				ptr->object = obj;
+				this->meshes.push_back(sphereMesh);
 
 				sphereMesh->BindTextures();
 				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 				glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-				return ptr;
 			}
 
-		protected:
-
-			StarModel()
+			StarModel() : Model()
 			{
 				type |= ModelType::Star;
+				object = Star::Create();
 			}
 
 		public:
@@ -240,15 +312,9 @@ namespace WDGS
 				static GLuint modelLoc = glGetUniformLocation(*renderProg, "model");
 				static GLuint mvpLoc = glGetUniformLocation(*renderProg, "mvp");
 
-				Physics::Star* star = (Physics::Star*)object.get();
+				WDGS::Star* star = (WDGS::Star*)object.get();
 
-				glm::dmat4 model =
-					glm::scale(
-						glm::rotate(
-							glm::translate(
-								glm::dmat4(1.0), star->worldPosition),
-							star->rotAngle, glm::dvec3(0.0, 1.0, 0.0)),
-						glm::dvec3(star->radius));
+				glm::dmat4 model = GetModelMatrix();
 
 				glm::mat4 mvp = glm::mat4(cam->GetTransform() * model);
 

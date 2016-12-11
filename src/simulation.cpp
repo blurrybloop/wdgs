@@ -4,68 +4,118 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 
+#include <iostream>
+#include <fstream>
+
 namespace WDGS
 {
-	namespace Physics
+	Simulation::Ptr Simulation::CreateFromResource(const char* name)
 	{
-		const double Simulation::gravityConst(6.6740831E-11);
+		Ptr p = Create();
+
+		std::ifstream fs;
+		std::string path = Resources::GetSimPath() + Resources::GetSimString(name, "path");
+
+		fs.open(path, std::ios::binary);
+		p->Load(fs);
+		fs.close();
+
+		return p;
+	}
+
+	Simulation::Simulation()
+	{
+		prevTime = 0;
+		gc = Physics::GravityController::Create();
+
+		camera = Camera::Create();
+		prevX = prevY = -1.0;
+
+		glGenBuffers(1, &ubo);
+
+		glBindBuffer(GL_UNIFORM_BUFFER, ubo);
+		glBufferData(GL_UNIFORM_BUFFER, 80, NULL, GL_DYNAMIC_DRAW);
+		glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+		glBindBufferRange(GL_UNIFORM_BUFFER, 0, ubo, 0, 64);
+		glBindBufferRange(GL_UNIFORM_BUFFER, 1, ubo, 64, 16);
+
+		environment = Graphics::Texture::Create("res/environments/milky.dds");
+
+		Graphics::Shader::Ptr vs = Graphics::Shader::CreateFromFile(GL_VERTEX_SHADER, "res/shaders/environment.vs.glsl");
+		Graphics::Shader::Ptr fs = Graphics::Shader::CreateFromFile(GL_FRAGMENT_SHADER, "res/shaders/environment.fs.glsl");
+
+		Graphics::Program::Ptr p = Graphics::Program::Create();
+		p->AddShader(vs);
+		p->AddShader(fs);
+		p->Link();
+
+		envCube = Graphics::Cube::Create();
+		envCube->SetProgram(p);
+		envCube->AddTexture(environment, "environment");
 
 
-		void Simulation::AddObject(Object::Ptr& obj)
+
+	/*	Graphics::StarModel::Ptr sun = Graphics::StarModel::Create("Sun", true);
+
+		sun->object->worldPosition = glm::dvec3(0.0, 0.0, 0.0);
+		sun->object->worldVelocity = glm::dvec3(0.0, 0.0, 0.0);
+
+		Graphics::RockyModel::Ptr earth = Graphics::RockyModel::Create("Earth", true);
+
+		earth->object->worldPosition = glm::dvec3(0.0, 0.0, 149598261000.0);
+		earth->object->worldVelocity = glm::dvec3(0.0, 0.0, 0.0);
+
+
+		earth->object->worldVelocity.x = glm::sqrt(glm::abs(Physics::GravityController::gravityConst * sun->object->mass / earth->object->worldPosition.z));
+		if (earth->object->worldPosition.z < 0.0)
+			earth->object->worldVelocity.x = -earth->object->worldVelocity.x;
+
+		earth->SetAthmoColor(glm::vec4(0.0f, 0.4f, 1.0f, 0.2f));
+
+		Graphics::Model::Ptr model = sun;
+
+		AddModel(model);
+
+		model = earth;
+		AddModel(model);
+		double r = std::static_pointer_cast<SphericObject>(earth->object)->radius;
+
+		camera->FocusOn(model->object, r + 30000000.0, 1.2 * r);
+		focusIndex = 1;
+
+		lightSource = sun->object.get();*/
+	}
+
+	Simulation::~Simulation()
+	{
+		glDeleteBuffers(1, &ubo);
+	}
+
+		void Simulation::AddModel(Graphics::Model::Ptr& model)
 		{
-			objects.push_back(obj);
-
-			k[0].resize(objects.size(), std::vector<double>(RV_LENGTH));
-			k[1].resize(objects.size(), std::vector<double>(RV_LENGTH)),
-			k[2].resize(objects.size(), std::vector<double>(RV_LENGTH)),
-			k[3].resize(objects.size(), std::vector<double>(RV_LENGTH));
-
-			size_t old = buf1.size();
-
-			buf0.push_back((MaterialPoint*)obj.get());
-
-			buf1.resize(objects.size());
-			buf2.resize(objects.size());
-			buf3.resize(objects.size());
-
-			for (size_t i = old; i < objects.size(); ++i)
-			{
-				buf1[i] = new MaterialPoint;
-				buf2[i] = new MaterialPoint;
-				buf3[i] = new MaterialPoint;
-			}
-
-			scale.resize(objects.size(), std::vector<double>(RV_LENGTH));
-			Delta.resize(objects.size(), std::vector<double>(RV_LENGTH));
-
-			for (size_t i = 0; i < renderers.size(); ++i)
-				renderers[i]->OnAddObject(obj);
-
+			models.push_back(model);
+			gc->AddMP(model->object.get());
 		}
 
-		void Simulation::RemoveObject(Object::Ptr& obj)
+		void Simulation::RemoveModel(Graphics::Model::Ptr& model)
 		{
-			auto it = std::find(objects.begin(), objects.end(), obj);
-			if (it != objects.end())
-			{
-				ptrdiff_t diff = it - objects.end();
-				objects.erase(it);
-				buf0.erase(buf0.begin() + diff);
-			}
-
-			for (size_t i = 0; i < renderers.size(); ++i)
-				renderers[i]->OnRemoveObject(obj);
+			//auto it = models.find(model->object.get());
+			//if (it != models.end())
+			//{
+			//	models.erase(it);
+			//	gc->RemoveMP(model->object.get());
+			//}
 		}
 
-		std::vector<Object::Ptr>& Simulation::GetObjects()
-		{
-			return objects;
-		}
+		//std::vector<Object::Ptr>& Simulation::GetObjects()
+		//{
+		//	return objects;
+		//}
 
 		void Simulation::SetTimestep(double step)
 		{
 			timestep = step;
-			currentStep = timestep;
 		}
 
 		double Simulation::GetTimestep()
@@ -73,205 +123,222 @@ namespace WDGS
 			return timestep;
 		}
 
-		void Simulation::AttachRenderer(SimulationRenderer::Ptr& renderer)
+		void Simulation::Refresh(double time)
 		{
-			renderers.push_back(renderer);
-			renderer->OnAttach(this);
-		}
-
-		void Simulation::DetachRenderer(SimulationRenderer::Ptr& renderer)
-		{
-			auto it = std::find(renderers.begin(), renderers.end(), renderer);
-
-			if (it != renderers.end())
-			{
-				renderers.erase(it);
-				renderer->OnDetach(this);
-			}
-		}
-
-		void Simulation::Recalc(double time)
-		{
-			double adt, h = 0;
 			double step = (time - prevTime) * timestep;
-			currentStep = glm::min(currentStep, step);
 
-			do
-			{
-				double fd = RK4AdaptiveStep(buf0, buf0, currentStep, adt, 1E-1);
-				h += adt;
-				currentStep = glm::min(step, fd);
-			} while (h + currentStep < step);
+			gc->Refresh(step);
 
-			if (step - h > DBL_EPSILON)
+			for (auto it = models.begin(); it != models.end(); ++it)
 			{
-				RK4Step(buf0, buf0, step - h);
-				h += step - h;
-			}
-
-			for (size_t i = 0; i < objects.size(); ++i)
-			{
-				objects[i]->rotAngle += 2 * glm::pi<double>() * step / objects[i]->rotPeriod;
-				objects[i]->rotAngle = SimHelpers::ClampCyclic(objects[i]->rotAngle, 0, 2 * glm::pi<double>());
+				(*it)->object->rotAngle += 2 * glm::pi<double>() * step / (*it)->object->rotPeriod;
+				(*it)->object->rotAngle = SimHelpers::ClampCyclic((*it)->object->rotAngle, 0, 2 * glm::pi<double>());
 			}
 
 			prevTime = time;
-			
-			for (size_t i = 0; i < renderers.size(); ++i)
-				renderers[i]->Render();
 
 		}
 
-
-		//Вектор производных для закона всемирного притяжения
-		void Simulation::Equations(std::vector<MaterialPoint*>& objs, size_t index, std::vector<double>& flow)
+		void Simulation::Render()
 		{
-			double d;
-			MaterialPoint* obj = objs[index];
+			camera->UpdateTransform();
 
-			//производные позиций - скорости
-			flow[0] = obj->worldVelocity.x;
-			flow[1] = obj->worldVelocity.y;
-			flow[2] = obj->worldVelocity.z;
+			GLfloat color[3] = { 0.0f, 0.0f, 0.0f };
 
-			//производные скоростей - ускорения
-			flow[3] = 0.0;
-			flow[4] = 0.0;
-			flow[5] = 0.0;
+			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			//масса
-			flow[6] = 0.0;
+			glEnable(GL_MULTISAMPLE);
+			glEnable(GL_DEPTH_TEST);
+			glEnable(GL_CULL_FACE);
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-			for (size_t i = 0; i < objs.size(); ++i)
+			Graphics::Light l;
+			l.position = lightSource->worldPosition;
+			l.ambient = glm::vec3(0.05f, 0.05f, 0.05f);
+			l.diffuse = glm::vec3(1.0f, 0.9f, 0.9f);
+			l.specular = glm::vec3(0.4f, 0.3f, 0.3f);
+
+			glBufferSubData(GL_UNIFORM_BUFFER, 0, 16, glm::value_ptr(l.position));
+			glBufferSubData(GL_UNIFORM_BUFFER, 16, 16, glm::value_ptr(l.ambient));
+			glBufferSubData(GL_UNIFORM_BUFFER, 32, 16, glm::value_ptr(l.diffuse));
+			glBufferSubData(GL_UNIFORM_BUFFER, 48, 16, glm::value_ptr(l.specular));
+
+			glm::vec3 cp = glm::vec3(camera->position);
+			glBufferSubData(GL_UNIFORM_BUFFER, 64, 16, glm::value_ptr(cp));
+
+			for (auto it = models.begin(); it != models.end(); ++it)
 			{
-				if (i != index)
-				{
-					d = glm::distance(obj->worldPosition, objs[i]->worldPosition);
-					flow[3] += -gravityConst *  objs[i]->mass * (obj->worldPosition.x - objs[i]->worldPosition.x) / (d * d * d);
-					flow[4] += -gravityConst *  objs[i]->mass * (obj->worldPosition.y - objs[i]->worldPosition.y) / (d * d * d);
-					flow[5] += -gravityConst *  objs[i]->mass * (obj->worldPosition.z - objs[i]->worldPosition.z) / (d * d * d);
-				}
+				(*it)->Render(camera, l);
 			}
+
+
+
+			glDisable(GL_MULTISAMPLE);
+			glDisable(GL_CULL_FACE);
+			glDisable(GL_BLEND);
+
+			glDepthFunc(GL_LEQUAL);
+
+			RenderEnvironment();
+
+			glDepthFunc(GL_LESS);
 		}
 
-		void Simulation::RK4Step(std::vector<MaterialPoint*>& in,
-			std::vector<MaterialPoint*>& out,
-			double dt          // fixed time step
-		)
+		void Simulation::RenderEnvironment()
 		{
-			static std::vector<double> f(RV_LENGTH);
-			size_t n = in.size();
+			Graphics::Program::Ptr& prog = envCube->GetProgram();
+			static GLuint vpLoc = glGetUniformLocation(*prog, "vp");
 
-			double *buf1_w, *buf3_w, *in_w, *out_w;
+			glm::mat4 vp = glm::mat4(camera->GetProjection()) * glm::mat4(glm::mat3(camera->GetLookat()));
+			prog->Use();
+			glUniformMatrix4fv(vpLoc, 1, GL_FALSE, glm::value_ptr(vp));
 
-			for (int m = 0; m < 4; ++m)
-			{
-				for (size_t j = 0; j < n; ++j)
-				{
-					Equations(m == 0 ? in : (m % 2 ? buf1 : buf3), j, f);
-					buf1_w = (double*)buf1[j], buf3_w = (double*)buf3[j], in_w = (double*)in[j];
-					for (int i = 0; i < RV_LENGTH; i++) {
-						k[m][j][i] = dt * f[i];
-						if (m < 2)
-							(m % 2 ? buf3_w : buf1_w)[i] = in_w[i] + k[m][j][i] / 2;
-						else if (m == 2)
-							(m % 2 ? buf3_w : buf1_w)[i] = in_w[i] + k[m][j][i];
-					}
-				}
-
-
-			}
-
-			for (size_t j = 0; j < n; ++j)
-			{
-				out_w = (double*)out[j], in_w = (double*)in[j];
-				for (int i = 0; i < RV_LENGTH; i++) {
-					out_w[i] = in_w[i] + (k[0][j][i] + 2 * k[1][j][i] + 2 * k[2][j][i] + k[3][j][i]) / 6;
-				}
-			}
+			envCube->Render();
 		}
 
-		double Simulation::RK4AdaptiveStep(std::vector<MaterialPoint*>& in,// returns adapted time step
-			std::vector<MaterialPoint*>& out,
-			double dt,              // initial time step
-			double& adt,
-			double accuracy)
+		void Simulation::OnResize(GLFWwindow*, int w, int h)
 		{
-			const double SAFETY = 0.9, PGROW = -0.2, PSHRINK = -0.25, ERRCON = 1.89E-4, TINY = 1.0E-30;
-			double *buf2_w, *buf3_w, *in_w, *out_w;
+			camera->aspect = (double)w / h;
+			camera->fov = 45.0;
+		}
 
-			int n = in.size();
-
-			for (int j = 0; j < n; ++j)
+		void Simulation::OnKey(GLFWwindow*, int key, int scancode, int action, int mode)
+		{
+			if (action == GLFW_PRESS)
 			{
-				Equations(in, j, scale[j]);
-				in_w = (double*)in[j];
+				if (key == GLFW_KEY_A)
+					camera->angles.y += 10.0;
+				else if (key == GLFW_KEY_D)
+					camera->angles.y -= 10.0;
 
-				for (int i = 0; i < RV_LENGTH; ++i)
-					scale[j][i] = glm::abs(in_w[i]) + glm::abs(scale[j][i] * dt) + TINY;
-			}
-
-			bool exit = false;
-			double error;
-
-			while (true) {
-				adt = dt;
-
-				RK4Step(in, buf2, dt / 2);
-				RK4Step(buf2, buf2, dt / 2);
-				RK4Step(in, buf3, dt);
-
-				double dt_temp, dt_temp2 = DBL_MAX;
-				int cnt = n;
-
-				for (int j = 0; j < n; ++j)
+				else if (key == GLFW_KEY_S)
+					camera->angles.x += 10.0;
+				else if (key == GLFW_KEY_W)
+					camera->angles.x -= 10.0;
+				else if (key == GLFW_KEY_TAB)
 				{
-					buf2_w = (double*)buf2[j], buf3_w = (double*)buf3[j];
-
-					for (int i = 0; i < RV_LENGTH; ++i)
-						Delta[j][i] = buf2_w[i] - buf3_w[i];
-
-					error = 0.0;
-					for (int i = 0; i < RV_LENGTH; i++)
-						error = glm::max(glm::abs(Delta[j][i] / scale[j][i]), error);
-					error /= accuracy;
-					if (error <= 1)
+					/*auto it = models.find(camera->GetFocus().get());
+					if (it != models.end())
 					{
-						if ((--cnt) == 0)
-						{
-							exit = true;
-						}
-
-						continue;
-					}
-
-					dt_temp = SAFETY * dt * glm::pow(error, PSHRINK);
-					if (dt >= 0)
-						dt_temp = glm::max(dt_temp, 0.1 * dt);
-					else
-						dt_temp = glm::min(dt_temp, 0.1 * dt);
-					if (glm::abs(dt_temp) == 0.0) {
-						return dt;
-					}
-
-					dt_temp2 = glm::min(dt_temp2, dt_temp);
+						Object::Ptr p((Object*)(++it)->first);
+						camera->FocusOn(p);
+					}*/
 				}
 
-				if (exit) break;
-				dt = dt_temp2;
+				camera->angles.y = SimHelpers::ClampCyclic(camera->angles.y, 0.0, 360.0);
+				camera->angles.x = SimHelpers::ClampCyclic(camera->angles.x, 0.0, 360.0);
 			}
 
-			if (error > ERRCON)
-				dt *= SAFETY * glm::pow(error, PGROW);
-			else
-				dt *= 5;
-			for (int j = 0; j < n; ++j)
-			{
-				out_w = (double*)out[j], buf2_w = (double*)buf2[j], buf3_w = (double*)buf3[j];
-				for (int i = 0; i < RV_LENGTH; ++i)
-					out_w[i] = buf2_w[i] + Delta[j][i] / 15;
-			}
-			return dt;
 		}
-	}
+
+		void Simulation::OnMouseButton(GLFWwindow*, int button, int action, int mods)
+		{
+
+		}
+
+		void Simulation::OnMouseMove(GLFWwindow* wnd, double x, double y)
+		{
+			if (prevX != -1)
+			{
+
+				if (glfwGetMouseButton(wnd, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+				{
+					camera->angles.y -= (x - prevX) / 3.0;
+					camera->angles.x -= (y - prevY) / 3.0;
+
+					camera->angles.y = SimHelpers::ClampCyclic(camera->angles.y, 0.0, 360.0);
+					camera->angles.x = SimHelpers::ClampCyclic(camera->angles.x, 0.0, 360.0);
+				}
+			}
+
+			prevX = x;
+			prevY = y;
+		}
+
+		void Simulation::OnMouseWheel(GLFWwindow*, double xoffset, double yoffset)
+		{
+			if (yoffset < 0)
+				camera->MoveOut();
+			else
+				camera->MoveIn();
+		}
+
+		void Simulation::Save(std::ostream& os)
+		{
+			//выгрузка моделей
+			size_t s = models.size();
+			os.write((char*)&s, sizeof(s));
+			int t;
+
+			for (auto it = models.begin(); it != models.end(); ++it)
+			{
+				t = (*it)->type;
+				os.write((char*)&t, sizeof(t));
+
+				(*it)->Save(os);
+			}
+
+			//выгрузка состояния камеры
+
+			os.write((char*)&focusIndex, sizeof(focusIndex));
+			os.write((char*)&camera->minDistance, sizeof(camera->minDistance));
+			os.write((char*)&camera->distanceToFocus, sizeof(camera->distanceToFocus));
+
+			os.write((char*)glm::value_ptr(camera->angles), sizeof(camera->angles));
+
+			os.write((char*)&timestep, sizeof(timestep));
+
+			//os << focusIndex << camera->minDistance << camera->distanceToFocus;
+			//os << camera->angles.x << camera->angles.y << camera->angles.z;
+		}
+
+		void Simulation::Load(std::istream& is)
+		{
+			int type;
+			size_t len;
+			Graphics::Model::Ptr model;
+
+			//загрузка моделей
+			is.read((char*)&len, sizeof(len));
+
+			//is >> len;
+			models.clear();
+			models.reserve(len);
+
+			for (int i = 0; i < len; ++i)
+			{
+				//is >> type;
+				is.read((char*)&type, sizeof(type));
+
+				if (type & Graphics::Model::Rocky)
+					model = Graphics::RockyModel::Create();
+				else if (type & Graphics::Model::Star)
+				{
+					model = Graphics::StarModel::Create();
+					lightSource = model->object.get();
+				}
+
+				model->Load(is);
+				AddModel(model);
+			}
+
+			//загрузка состояния камеры
+
+			double md, d;
+
+			is.read((char*)&focusIndex, sizeof(focusIndex));
+			is.read((char*)&md, sizeof(md));
+			is.read((char*)&d, sizeof(d));
+
+			is.read((char*)glm::value_ptr(camera->angles), sizeof(camera->angles));
+
+			is.read((char*)&timestep, sizeof(timestep));
+			//is >> focusIndex >> md >> d;
+			//is >> camera->angles.x >> camera->angles.y >> camera->angles.z;
+
+			camera->FocusOn(models[focusIndex]->object, d, md);
+
+		}
 }

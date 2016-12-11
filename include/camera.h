@@ -2,8 +2,9 @@
 #define _WDGS_CAMERA_H
 
 #include "memmng.h"
+#include <glm/glm.hpp>
+
 #include "physics/object.h"
-#include "glm/glm.hpp"
 
 namespace WDGS
 {
@@ -12,10 +13,12 @@ namespace WDGS
 		DECLARE_MEMMNG(Camera)
 
 	public:
+		Object::Ptr focusedOn;
 
-		Physics::Object::Ptr focusedOn;
 		glm::dvec3 angles;
 		double distanceToFocus;
+		double minDistance;
+		double sensitivity;
 		double fov;
 		double aspect;
 		glm::dvec3 position;
@@ -27,11 +30,18 @@ namespace WDGS
 		Camera()
 		{
 			distanceToFocus = 0.0;
+			sensitivity = 1.5;
 		}
 
 
 	public:
-		void FocusOn(Physics::Object::Ptr& obj);
+		void FocusOn(Object::Ptr& model, double distance, double minDistance = 0.0);
+		Object::Ptr GetFocus();
+
+		void MoveIn();
+		void MoveOut();
+
+		void SetSensitivity(double s);
 
 		void UpdateTransform();
 		glm::dmat4& GetTransform();

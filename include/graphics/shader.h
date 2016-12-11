@@ -10,6 +10,7 @@
 
 #include "debug.h"
 #include "memmng.h"
+#include "resources.h"
 
 namespace WDGS
 {
@@ -32,6 +33,30 @@ namespace WDGS
 				ptr->OutputLog();
 
 				return ptr;
+			}
+
+			static Ptr CreateFromResource(GLuint shaderType, const GLchar* resName)
+			{
+				std::string path = Resources::GetShaderPath();
+				path += resName;
+
+				switch (shaderType)
+				{
+				case GL_VERTEX_SHADER:
+					path += ".vs";
+					break;
+
+				case GL_FRAGMENT_SHADER:
+					path += ".fs";
+					break;
+
+				default:
+					break;
+				}
+					
+				path += ".glsl";
+
+				return Graphics::Shader::CreateFromFile(shaderType, path.c_str());
 			}
 
 			static Ptr CreateFromFile(GLuint shaderType, const GLchar* path)

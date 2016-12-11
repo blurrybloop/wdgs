@@ -1,83 +1,75 @@
-#ifndef _WDGS_PHYSICS_SIMULATION_H
-#define _WDGS_PHYSICS_SIMULATION_H
+#ifndef _WDGS_SIMULATIONBASE_H
+#define _WDGS_SIMULATIONBASE_H
 
 #include <vector>
+#include <map>
+
 
 #include "memmng.h"
 
 #include "physics/object.h"
-#include "simrenderer.h"
+#include "physics/gravity.h"
+#include "graphics/model.h"
+#include "graphics/texture.h"
+
+#include "camera.h"
+
+#include <GLFW/glfw3.h>
 
 namespace WDGS
 {
-	namespace Physics
+	class Simulation : public Saveable
 	{
-		const int RV_LENGTH = sizeof(MaterialPoint) / sizeof(double);
+		DECLARE_MEMMNG(Simulation)
 
-		class Simulation
-		{
-			DECLARE_MEMMNG(Simulation)
+		static Ptr CreateFromResource(const char* name);
 
-		protected:
-			double timestep;
-			double currentStep;
-			double prevTime;
-			std::vector<Object::Ptr> objects;
-			std::vector<SimulationRenderer::Ptr> renderers;
+	protected:
+		double timestep;
+		double prevTime;
 
-		public:
-			static const double gravityConst;
+		Physics::GravityController::Ptr gc;
 
-			Simulation()
-			{
-				prevTime = 0;
-			}
+		std::vector<Graphics::Model::Ptr> models;
 
-			~Simulation()
-			{
-				for (size_t i = 0; i < objects.size(); ++i)
-				{
-					delete buf1[i];
-					delete buf2[i];
-					delete buf3[i];
-				}
-			}
+		Graphics::Texture::Ptr environment;
 
-			void Recalc(double time);
-			void SetTimestep(double step);
-			double GetTimestep();
+		Camera::Ptr camera;
+		GLuint focusIndex;
+		Object* lightSource;
+		double prevX, prevY;
 
-			void AddObject(Object::Ptr& obj);
-			void RemoveObject(Object::Ptr& obj);
-			std::vector<Object::Ptr>& GetObjects();
+		GLuint ubo;
+		Graphics::Cube::Ptr envCube;
 
-			void AttachRenderer(SimulationRenderer::Ptr& renderer);
-			void DetachRenderer(SimulationRenderer::Ptr& renderer);
+		Simulation();
 
-		protected:
-			//Вектор производных для закона всемирного притяжения
-			static void Equations(std::vector<MaterialPoint*>& objs, size_t index, std::vector<double>& flow);
+	public:
+		~Simulation();
 
-			std::vector<std::vector<double>> k[4];
-			std::vector<MaterialPoint*> buf0, buf1, buf2, buf3;
-			std::vector<std::vector<double>> scale;
-			std::vector<std::vector<double>> Delta;
+		void Refresh(double time);
+		void Render();
 
+		void SetTimestep(double step);
+		double GetTimestep();
 
-			void RK4Step(std::vector<MaterialPoint*>& in,
-				std::vector<MaterialPoint*>& out,
-				double dt          // fixed time step
-			);
+		void AddModel(Graphics::Model::Ptr& model);
+		void RemoveModel(Graphics::Model::Ptr& model);
+		//std::vector<Object::Ptr>& GetObjects();
 
-			double RK4AdaptiveStep(std::vector<MaterialPoint*>& in,// returns adapted time step
-				std::vector<MaterialPoint*>& out,
-				double dt,              // initial time step
-				double& adt,
-				double accuracy = 1e-6);
-		};
+		void OnResize(GLFWwindow*, int w, int h);
+		void OnKey(GLFWwindow*, int key, int scancode, int action, int mode);
+		void OnMouseButton(GLFWwindow*, int button, int action, int mods);
+		void OnMouseMove(GLFWwindow*, double x, double y);
+		void OnMouseWheel(GLFWwindow*, double xoffset, double yoffset);
 
+		virtual void Save(std::ostream& fs);
+		virtual void Load(std::istream& fs);
 
-	}
+	protected:
+		void RenderEnvironment();
+	};
+
 }
 
 #endif

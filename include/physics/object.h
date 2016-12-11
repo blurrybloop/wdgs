@@ -1,23 +1,15 @@
 #ifndef _WDGS_PHYSICS_OBJECT_H
 #define _WDGS_PHYSICS_OBJECT_H
 
+#include "physics/gravity.h"
 #include "memmng.h"
 #include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <string>
 
 namespace WDGS
 {
-	namespace Physics
-	{
-		struct MaterialPoint
-		{
-			glm::dvec3 worldPosition; //позиция в мировых координатах
-			glm::dvec3 worldVelocity; //скорость в мировых координатах
-			double mass; //масса
-
-		};
-
-		struct Object : public MaterialPoint
+		struct Object : public Physics::MaterialPoint, public Saveable
 		{
 			DECLARE_MEMMNG(Object)
 
@@ -34,6 +26,58 @@ namespace WDGS
 			glm::dvec3 axisInclination; //наклон оси вращения
 			double rotPeriod; //период вращения
 			double rotAngle;
+
+			virtual void Save(std::ostream& os)
+			{
+				size_t s = name.length();
+				os.write((char*)&s, sizeof(s));
+				os.write(name.c_str(), s);
+
+				os.write((char*)glm::value_ptr(worldPosition), sizeof(worldPosition));
+				os.write((char*)glm::value_ptr(worldVelocity), sizeof(worldVelocity));
+
+				os.write((char*)&mass, sizeof(mass));
+
+				os.write((char*)glm::value_ptr(axisInclination), sizeof(axisInclination));
+
+				os.write((char*)&rotPeriod, sizeof(rotPeriod));
+				os.write((char*)&rotAngle, sizeof(rotAngle));
+
+				/*os << name.length() << name;
+				os << worldPosition.x << worldPosition.y << worldPosition.z;
+				os << worldVelocity.x << worldVelocity.y << worldVelocity.z;
+				os << mass;
+				os << axisInclination.x << axisInclination.y << axisInclination.z;
+				os << rotPeriod << rotAngle;*/
+			}
+
+			virtual void Load(std::istream& is)
+			{
+				size_t s = name.length();
+				is.read((char*)&s, sizeof(s));
+				name.resize(s, 0);
+				is.read((char*)name.c_str(), s);
+
+				is.read((char*)glm::value_ptr(worldPosition), sizeof(worldPosition));
+				is.read((char*)glm::value_ptr(worldVelocity), sizeof(worldVelocity));
+
+				is.read((char*)&mass, sizeof(mass));
+
+				is.read((char*)glm::value_ptr(axisInclination), sizeof(axisInclination));
+
+				is.read((char*)&rotPeriod, sizeof(rotPeriod));
+				is.read((char*)&rotAngle, sizeof(rotAngle));
+
+				//size_t len;
+				//is >> len;
+				//
+
+				//is >> worldPosition.x >> worldPosition.y >> worldPosition.z;
+				//is >> worldVelocity.x >> worldVelocity.y >> worldVelocity.z;
+				//is >> mass;
+				//is >> axisInclination.x >> axisInclination.y >> axisInclination.z;
+				//is >> rotPeriod >> rotAngle;
+			}
 
 		protected:
 			Object()
@@ -55,13 +99,27 @@ namespace WDGS
 			{
 				type |= ObjectType::Spheric;
 			}
+
+			virtual void Save(std::ostream& os)
+			{
+				Object::Save(os);
+				os.write((char*)&radius, sizeof(radius));
+				//os << radius;
+			}
+
+			virtual void Load(std::istream& is)
+			{
+				Object::Load(is);
+				is.read((char*)&radius, sizeof(radius));
+				//is >> radius;
+			}
 		};
 
 		class Planet : public SphericObject
 		{
 			DECLARE_MEMMNG(Planet)
-
 		public:
+
 			Planet() : SphericObject()
 			{
 				type |= ObjectType::Planet;
@@ -78,7 +136,5 @@ namespace WDGS
 				type |= ObjectType::Star;
 			}
 		};
-
-	}
 }
 #endif

@@ -3,14 +3,15 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "physics/simhelpers.h"
+#include <iostream>
+#include <fstream>
 
 namespace WDGS
 {
 	bool Application::running(false);
 	GLFWwindow* Application::window(0);
 
-	Physics::Simulation::Ptr Application::sim(0);
-	SimulationRenderer::Ptr Application::renderer(0);
+	Simulation::Ptr Application::sim(0);
 
 	void APIENTRY Application::DebugCallback(GLenum source,
 		GLenum type,
@@ -25,11 +26,9 @@ namespace WDGS
 
 	int Application::OnStartup()
 	{
-		renderer = SimulationRenderer::Create();
-		sim = Physics::Simulation::Create();
+		sim = Simulation::CreateFromResource("0");
 
-		sim->SetTimestep(10 * 24 * 60.0 * 60.0);
-		sim->AttachRenderer(renderer);
+		//sim->SetTimestep(10 * 24 * 60.0 * 60.0);
 
 		return 1;
 	}
@@ -42,33 +41,34 @@ namespace WDGS
 
 	void Application::OnRender(double time)
 	{
-		sim->Recalc(time);
+		sim->Refresh(time);
+		sim->Render();
 	}
 
 	void Application::OnResize(GLFWwindow* wnd, int w, int h)
 	{
 		glViewport(0, 0, w, h);
-		renderer->OnResize(wnd, w, h);
+		sim->OnResize(wnd, w, h);
 	}
 
 	void Application::OnKey(GLFWwindow* w, int key, int scancode, int action, int mode)
 	{
-		renderer->OnKey(w, key, scancode, action, mode);
+		sim->OnKey(w, key, scancode, action, mode);
 	}
 
 	void Application::OnMouseButton(GLFWwindow* w, int button, int action, int mods)
 	{
-		renderer->OnMouseButton(w, button, action, mods);
+		sim->OnMouseButton(w, button, action, mods);
 	}
 
 	void Application::OnMouseMove(GLFWwindow* w, double x, double y)
 	{
-		renderer->OnMouseMove(w, x, y);
+		sim->OnMouseMove(w, x, y);
 	}
 
 	void Application::OnMouseWheel(GLFWwindow* w , double xoffset, double yoffset)
 	{
-		renderer->OnMouseWheel(w, xoffset, yoffset);
+		sim->OnMouseWheel(w, xoffset, yoffset);
 
 	}
 
@@ -188,6 +188,12 @@ namespace WDGS
 		{
 			glfwShowWindow(window);
 			OnResize(window, w, h);
+
+			//std::ofstream fs;
+			//fs.open("res/simulations/solar.sim", std::ios::binary);
+
+			//sim->Save(fs);
+			//fs.close();
 
 			//главный цикл приложения
 			do

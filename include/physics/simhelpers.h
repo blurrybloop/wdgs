@@ -6,8 +6,6 @@
 
 namespace WDGS
 {
-	namespace Physics
-	{
 		class SimHelpers
 		{
 		public:
@@ -28,7 +26,6 @@ namespace WDGS
 				//obj->worldVelocity.y = sqrt(Simulation::gravityConst * host->mass / d);
 			}
 		};
-	}
 }
 
 #endif

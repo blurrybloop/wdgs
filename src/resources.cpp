@@ -27,14 +27,14 @@ namespace WDGS
 
 	void Resources::GetModelSection(const char* modelName, int type, std::string& out)
 	{
-		out = "Model";
+		out = "Body";
 		switch (type)
 		{
-		case Graphics::Model::Rocky:
+		case Body::Rocky:
 			out += ".Planet";
 			break;
 
-		case Graphics::Model::Star:
+		case Body::Star:
 			out += ".Star";
 			break;
 		}

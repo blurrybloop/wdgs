@@ -61,7 +61,7 @@ namespace WDGS
 		sun->object->worldPosition = glm::dvec3(0.0, 0.0, 0.0);
 		sun->object->worldVelocity = glm::dvec3(0.0, 0.0, 0.0);
 
-		Graphics::RockyModel::Ptr earth = Graphics::RockyModel::Create("Earth", true);
+		Graphics::RockyBody::Ptr earth = Graphics::RockyBody::Create("Earth", true);
 
 		earth->object->worldPosition = glm::dvec3(0.0, 0.0, 149598261000.0);
 		earth->object->worldVelocity = glm::dvec3(0.0, 0.0, 0.0);
@@ -73,7 +73,7 @@ namespace WDGS
 
 		earth->SetAthmoColor(glm::vec4(0.0f, 0.4f, 1.0f, 0.2f));
 
-		Graphics::Model::Ptr model = sun;
+		Graphics::Body::Ptr model = sun;
 
 		AddModel(model);
 
@@ -92,13 +92,13 @@ namespace WDGS
 		glDeleteBuffers(1, &ubo);
 	}
 
-		void Simulation::AddModel(Graphics::Model::Ptr& model)
+		void Simulation::AddModel(Body::Ptr& model)
 		{
 			models.push_back(model);
 			gc->AddMP(model->object.get());
 		}
 
-		void Simulation::RemoveModel(Graphics::Model::Ptr& model)
+		void Simulation::RemoveModel(Body::Ptr& model)
 		{
 			//auto it = models.find(model->object.get());
 			//if (it != models.end())
@@ -289,21 +289,17 @@ namespace WDGS
 			os.write((char*)glm::value_ptr(camera->angles), sizeof(camera->angles));
 
 			os.write((char*)&timestep, sizeof(timestep));
-
-			//os << focusIndex << camera->minDistance << camera->distanceToFocus;
-			//os << camera->angles.x << camera->angles.y << camera->angles.z;
 		}
 
 		void Simulation::Load(std::istream& is)
 		{
 			int type;
 			size_t len;
-			Graphics::Model::Ptr model;
+			Body::Ptr model;
 
 			//загрузка моделей
 			is.read((char*)&len, sizeof(len));
 
-			//is >> len;
 			models.clear();
 			models.reserve(len);
 
@@ -312,11 +308,11 @@ namespace WDGS
 				//is >> type;
 				is.read((char*)&type, sizeof(type));
 
-				if (type & Graphics::Model::Rocky)
-					model = Graphics::RockyModel::Create();
-				else if (type & Graphics::Model::Star)
+				if (type & Body::Rocky)
+					model = RockyBody::Create();
+				else if (type & Body::Star)
 				{
-					model = Graphics::StarModel::Create();
+					model = StarModel::Create();
 					lightSource = model->object.get();
 				}
 
@@ -335,10 +331,9 @@ namespace WDGS
 			is.read((char*)glm::value_ptr(camera->angles), sizeof(camera->angles));
 
 			is.read((char*)&timestep, sizeof(timestep));
-			//is >> focusIndex >> md >> d;
-			//is >> camera->angles.x >> camera->angles.y >> camera->angles.z;
 
 			camera->FocusOn(models[focusIndex]->object, d, md);
+			models[focusIndex]->Maximize();
 
 		}
 }

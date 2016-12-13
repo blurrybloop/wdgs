@@ -30,7 +30,7 @@ namespace WDGS
 
 		Physics::GravityController::Ptr gc;
 
-		std::vector<Graphics::Model::Ptr> models;
+		std::vector<Body::Ptr> models;
 
 		Graphics::Texture::Ptr environment;
 
@@ -53,8 +53,8 @@ namespace WDGS
 		void SetTimestep(double step);
 		double GetTimestep();
 
-		void AddModel(Graphics::Model::Ptr& model);
-		void RemoveModel(Graphics::Model::Ptr& model);
+		void AddModel(Body::Ptr& model);
+		void RemoveModel(Body::Ptr& model);
 		//std::vector<Object::Ptr>& GetObjects();
 
 		void OnResize(GLFWwindow*, int w, int h);

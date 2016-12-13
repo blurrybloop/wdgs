@@ -13,6 +13,7 @@ namespace WDGS
 	class INI
 	{
 		std::map <std::string, std::map<std::string, std::string>> mp;
+		std::string path;
 
 		static std::string trim(std::string& str)
 		{
@@ -30,10 +31,11 @@ namespace WDGS
 
 		INI(const char* path)
 		{
-			if (mp.empty())
+			if (this->path.empty())
 			{
-				std::fstream fs;
-				fs.open(path, std::ios::in);
+				std::ifstream fs;
+				this->path = path;
+				fs.open(path);
 				std::string from = "";
 
 				while (1)
@@ -68,6 +70,8 @@ namespace WDGS
 						mp[from][trim(key)] = trim(val);
 					}
 				}
+
+				fs.close();
 			}
 		}
 
@@ -139,6 +143,61 @@ namespace WDGS
 			return v;
 		}
 
+
+		void SetString(const char* section, const char* key, const char* val)
+		{
+			mp[section][key] = val;
+		}
+
+		void SetInt(const char* section, const char* key, int val)
+		{
+			char ch[20];
+			sprintf(ch, "%d", val);
+			SetString(section, key, ch);
+		}
+
+		void SetDouble(const char* section, const char* key, double val)
+		{
+			char ch[50];
+			sprintf(ch, "%G", val);
+			SetString(section, key, ch);
+		}
+
+		void SetVec3(const char* section, const char* key, glm::dvec3& val)
+		{
+			char ch[100];
+			sprintf(ch, "%G,%G,%G", val[0], val[1], val[2]);
+			SetString(section, key, ch);
+		}
+
+		void SetVec4(const char* section, const char* key, glm::dvec4& val)
+		{
+			char ch[100];
+			sprintf(ch, "%G,%G,%G,%G", val[0], val[1], val[2], val[3]);
+			SetString(section, key, ch);
+		}
+
+		void Save()
+		{
+			if (!this->path.empty())
+			{
+				std::ofstream fs;
+				fs.open(this->path.c_str());
+
+				for (auto it = mp.begin(); it != mp.end(); it++)
+				{
+					if (it->first != "")
+					{
+						fs << "[" << it->first << "]" << std::endl;
+					}
+					
+					for (auto itt = mp[it->first].begin(); itt != mp[it->first].end(); itt++)
+					{
+						fs << itt->first << "=" << itt->second << std::endl;
+					}
+				}
+			}
+		}
 
 	};
 }

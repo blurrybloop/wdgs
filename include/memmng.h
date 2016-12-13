@@ -19,6 +19,7 @@ DECLARE_MEMMNG_NOCREATE(className)			\
 		return Ptr(new className);			\
 	}										\
 
+
 template <class T>
 class ptr_equals : public std::binary_function<T, T, bool>
 {

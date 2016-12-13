@@ -14,6 +14,12 @@
 #include "graphics/texture.h"
 #include "graphics/mesh.h"
 #include "physics/simulation.h"
+#include "ui.h"
+
+#define WDGS_GL_MAJOR_VERSION 3
+#define WDGS_GL_MINOR_VERSION 3
+
+#define WDGS_TITLE "Walking Dinosaur's Gravity Simulator"
 
 namespace WDGS
 {
@@ -25,6 +31,7 @@ namespace WDGS
 		static bool running;
 
 		static Simulation::Ptr sim;
+		static UI::Ptr ui;
 
 		static void OnError(const char* message);
 		static void OnRender(double time);
@@ -36,6 +43,7 @@ namespace WDGS
 		static void OnMouseButton(GLFWwindow*, int button, int action, int mods);
 		static void OnMouseMove(GLFWwindow*, double x, double y);
 		static void OnMouseWheel(GLFWwindow*, double xoffset, double yoffset);
+		static void OnChar(GLFWwindow*, unsigned int);
 
 		static void APIENTRY DebugCallback(GLenum source,
 			GLenum type,

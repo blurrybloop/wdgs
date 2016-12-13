@@ -1,7 +1,6 @@
 #include "application.h"
 
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+
 #include "physics/simhelpers.h"
 #include <iostream>
 #include <fstream>
@@ -12,6 +11,7 @@ namespace WDGS
 	GLFWwindow* Application::window(0);
 
 	Simulation::Ptr Application::sim(0);
+	UI::Ptr Application::ui(0);
 
 	void APIENTRY Application::DebugCallback(GLenum source,
 		GLenum type,
@@ -26,6 +26,7 @@ namespace WDGS
 
 	int Application::OnStartup()
 	{
+		ui = UI::Create();
 		sim = Simulation::CreateFromResource("0");
 
 		//sim->SetTimestep(10 * 24 * 60.0 * 60.0);
@@ -43,33 +44,46 @@ namespace WDGS
 	{
 		sim->Refresh(time);
 		sim->Render();
+		ui->Render();
 	}
 
 	void Application::OnResize(GLFWwindow* wnd, int w, int h)
 	{
-		glViewport(0, 0, w, h);
-		sim->OnResize(wnd, w, h);
+		if (h != 0)
+		{
+			glViewport(0, 0, w, h);
+			sim->OnResize(wnd, w, h);
+			ui->OnResize(w, h);
+		}
 	}
 
 	void Application::OnKey(GLFWwindow* w, int key, int scancode, int action, int mode)
 	{
-		sim->OnKey(w, key, scancode, action, mode);
+		if (!ui->OnKey(key, action))
+			sim->OnKey(w, key, scancode, action, mode);
 	}
 
 	void Application::OnMouseButton(GLFWwindow* w, int button, int action, int mods)
 	{
-		sim->OnMouseButton(w, button, action, mods);
+		if (!ui->OnMouseButton(button, action))
+			sim->OnMouseButton(w, button, action, mods);
 	}
 
 	void Application::OnMouseMove(GLFWwindow* w, double x, double y)
 	{
-		sim->OnMouseMove(w, x, y);
+		if (!ui->OnMouseMove(x, y))
+			sim->OnMouseMove(w, x, y);
 	}
 
 	void Application::OnMouseWheel(GLFWwindow* w , double xoffset, double yoffset)
 	{
-		sim->OnMouseWheel(w, xoffset, yoffset);
+		if (!ui->OnMouseWheel(yoffset))
+			sim->OnMouseWheel(w, xoffset, yoffset);
+	}
 
+	void Application::OnChar(GLFWwindow*, unsigned int ch)
+	{
+		ui->OnChar(ch);
 	}
 
 	void Application::OnError(const char* message)
@@ -95,18 +109,16 @@ namespace WDGS
 		#endif
 
 		//установка минимальной версии
-		int major = Config::GetVal("glMajorVersion").Int32;
-		int minor = Config::GetVal("glMinorVersion").Int32;
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, major);
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, minor);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, WDGS_GL_MAJOR_VERSION);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, WDGS_GL_MINOR_VERSION);
 
 		//без устаревшей функциональности (ниже 3.2)
 		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 		glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-		int fullscreen = Config::GetVal("fullscreen").Int32;
-		int w = Config::GetVal("windowWidth").Int32;
-		int h = Config::GetVal("windowHeight").Int32;
+		int fullscreen = Config::GetInt("Fullscreen");
+		int w = Config::GetInt("WindowWidth");
+		int h = Config::GetInt("WindowHeight");
 
 		//полноэкранный режим - установка размеров окна под экран (если не заданы явно)
 		if (fullscreen && (w == 0 || h == 0))
@@ -126,9 +138,11 @@ namespace WDGS
 
 		//создание окна
 		window = glfwCreateWindow(w, h,
-			Config::GetString("title").c_str(),
+			WDGS_TITLE,
 			fullscreen ? glfwGetPrimaryMonitor() : NULL,
 			NULL);
+
+		glfwSetWindowPos(window, Config::GetInt("WindowX"), Config::GetInt("WindowY"));
 
 		if (!window)
 		{
@@ -155,11 +169,11 @@ namespace WDGS
 		}
 
 		char vs[100];
-		sprintf(vs, "GL_VERSION_%d_%d", major, minor);
+		sprintf(vs, "GL_VERSION_%d_%d", WDGS_GL_MAJOR_VERSION, WDGS_GL_MINOR_VERSION);
 
 		if (!glewIsSupported(vs))
 		{
-			sprintf(vs, "OpenGL %d.%d or greater is required.", major, minor);
+			sprintf(vs, "OpenGL %d.%d or greater is required.", WDGS_GL_MAJOR_VERSION, WDGS_GL_MINOR_VERSION);
 			OnError(vs);
 			return 0;
 		}
@@ -170,6 +184,7 @@ namespace WDGS
 		glfwSetMouseButtonCallback(window, OnMouseButton);
 		glfwSetCursorPosCallback(window, OnMouseMove);
 		glfwSetScrollCallback(window, OnMouseWheel);
+		glfwSetCharCallback(window, OnChar);
 			
 		if (GL_VERSION_4_3)
 		{
@@ -211,6 +226,22 @@ namespace WDGS
 			OnError("Failed to initialize application.\nSee log for details.");
 
 		OnShutdown();
+
+		int x, y;
+		glfwGetWindowPos(window, &x, &y);
+		glfwGetWindowSize(window, &w, &h);
+
+		Config::SetInt("WindowX", x);
+		Config::SetInt("WindowY", y);
+
+		if (!fullscreen)
+		{
+			Config::SetInt("WindowWidth", w);
+			Config::SetInt("WindowHeight", h);
+		}
+
+		Config::SetInt("Fullscreen", fullscreen);
+		Config::Save();
 
 		glfwDestroyWindow(window);
 		glfwTerminate();

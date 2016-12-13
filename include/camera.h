@@ -2,9 +2,7 @@
 #define _WDGS_CAMERA_H
 
 #include "memmng.h"
-#include <glm/glm.hpp>
-
-#include "physics/object.h"
+#include "object.h"
 
 namespace WDGS
 {

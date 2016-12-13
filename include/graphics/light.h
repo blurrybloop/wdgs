@@ -1,8 +1,6 @@
 #ifndef _WDGS_GRAPHICS_LIGHT_H
 #define _WDGS_GRAPHICS_LIGHT_H
 
-#include <glm/glm.hpp>
-
 namespace WDGS
 {
 	namespace Graphics

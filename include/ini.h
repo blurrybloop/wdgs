@@ -1,13 +1,6 @@
 #ifndef _WDGS_INI_H
 #define _WDGS_INI_H
 
-#include <glm/glm.hpp>
-#include <map>
-#include <string>
-#include <iostream>
-#include <fstream>
-
-
 namespace WDGS
 {
 	class INI

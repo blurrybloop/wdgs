@@ -1,17 +1,9 @@
 #ifndef _WDGS_GRAPHICS_MESH_H
 #define _WDGS_GRAPHICS_MESH_H
 
-#include <vector>
-
 #include "memmng.h"
 #include "graphics/program.h"
 #include "graphics/texture.h"
-
-#ifdef WIN32
-#include <dirent/dirent.h>
-#else
-#include <dirent.h>
-#endif
 
 namespace WDGS
 {

@@ -1,13 +1,6 @@
 #ifndef _WDGS_GRAPHICS_SHADER_H
 #define _WDGS_GRAPHICS_SHADER_H
 
-#include <GL/glew.h>
-
-#include <string>
-#include <fstream>
-#include <sstream>
-#include <iostream>
-
 #include "debug.h"
 #include "memmng.h"
 #include "resources.h"

@@ -1,19 +1,10 @@
 #ifndef _WDGS_APPLICATION_H
 #define _WDGS_APPLICATION_H
 
-#ifdef WIN32
-#include <Windows.h>
-#endif
-
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-
-#include <string>
-
 #include "config.h"
 #include "graphics/texture.h"
 #include "graphics/mesh.h"
-#include "physics/simulation.h"
+#include "simulation.h"
 #include "ui.h"
 
 #define WDGS_GL_MAJOR_VERSION 3

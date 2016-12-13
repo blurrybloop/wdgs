@@ -1,9 +1,6 @@
+#include "pch.h"
 #include "application.h"
-
-
-#include "physics/simhelpers.h"
-#include <iostream>
-#include <fstream>
+#include "simhelpers.h"
 
 namespace WDGS
 {
@@ -71,13 +68,13 @@ namespace WDGS
 
 	void Application::OnMouseMove(GLFWwindow* w, double x, double y)
 	{
-		if (!ui->OnMouseMove(x, y))
+		if (!ui->OnMouseMove(int(x), int(y)))
 			sim->OnMouseMove(w, x, y);
 	}
 
 	void Application::OnMouseWheel(GLFWwindow* w , double xoffset, double yoffset)
 	{
-		if (!ui->OnMouseWheel(yoffset))
+		if (!ui->OnMouseWheel(int(yoffset)))
 			sim->OnMouseWheel(w, xoffset, yoffset);
 	}
 

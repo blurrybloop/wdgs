@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "graphics/mesh.h"
 
 GLuint WDGS::Graphics::Sphere::vao(0);

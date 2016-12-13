@@ -1,9 +1,6 @@
 #ifndef _WDGS_GRAPHICS_TEXTURE_H
 #define _WDGS_GRAPHICS_TEXTURE_H
 
-#include <GL/glew.h>
-#include <gli/gli.hpp>
-
 #include "memmng.h"
 #include "graphics/program.h"
 

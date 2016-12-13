@@ -1,7 +1,6 @@
+#include "pch.h"
 #include "application.h"
 #include "debug.h"
-
-#include <map>
 
 #ifdef WIN32
 

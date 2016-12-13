@@ -1,9 +1,7 @@
 #ifndef _WDGS_PHYSICS_GRAVITY_H
 #define _WDGS_PHYSICS_GRAVITY_H
 
-#include <glm/glm.hpp>
 #include "memmng.h"
-#include <vector>
 
 namespace WDGS
 {

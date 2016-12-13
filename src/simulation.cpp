@@ -1,11 +1,6 @@
-#include "physics/simulation.h"
-#include "physics/simhelpers.h"
-
-#include <glm/glm.hpp>
-#include <glm/gtc/constants.hpp>
-
-#include <iostream>
-#include <fstream>
+#include "pch.h"
+#include "simulation.h"
+#include "simhelpers.h"
 
 namespace WDGS
 {
@@ -303,7 +298,7 @@ namespace WDGS
 			models.clear();
 			models.reserve(len);
 
-			for (int i = 0; i < len; ++i)
+			for (size_t i = 0; i < len; ++i)
 			{
 				//is >> type;
 				is.read((char*)&type, sizeof(type));

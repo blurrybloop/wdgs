@@ -1,12 +1,6 @@
 #ifndef _WDGS_DEBUG_H
 #define _WDGS_DEBUG_H
 
-#include <iostream>
-
-#ifdef WIN32
-#include <Windows.h>
-#endif
-
 namespace WDGS
 {
 	struct dbgstream : public std::ostream, public std::streambuf

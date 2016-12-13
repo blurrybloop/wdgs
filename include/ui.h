@@ -2,7 +2,6 @@
 #define _WDGS_UI_H
 
 #include "memmng.h"
-#include "AntTweakBar.h"
 
 namespace WDGS
 {

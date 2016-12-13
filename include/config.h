@@ -1,9 +1,5 @@
-
 #ifndef _WDGS_CONFIG_H
 #define _WDGS_CONFIG_H
-
-#include <map>
-#include <string>
 
 #include "ini.h"
 

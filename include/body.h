@@ -1,23 +1,15 @@
 #ifndef _WDGS_BODY_H
 #define _WDGS_BODY_H
 
-#include <vector>
-#include <memory>
-#include <sys/stat.h>
-
 #include "memmng.h"
 #include "graphics/program.h"
 #include "graphics/texture.h"
 #include "graphics/mesh.h"
 #include "graphics/light.h"
 
-#include "physics/object.h"
+#include "object.h"
 #include "camera.h"
 #include "ui.h"
-
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 namespace WDGS
 {

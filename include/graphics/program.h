@@ -1,9 +1,6 @@
 #ifndef _WDGS_GRAPHICS_PROGRAM_H
 #define _WDGS_GRAPHICS_PROGRAM_H
 
-#include <vector>
-#include <map>
-
 #include "graphics/shader.h"
 #include "memmng.h"
 

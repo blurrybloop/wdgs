@@ -1,12 +1,6 @@
 #ifndef _WDGS_MEMMNG_H
 #define _WDGS_MEMMNG_H
 
-#include <memory>
-#include <functional>
-#include <algorithm>
-#include <iostream>
-
-
 #define DECLARE_MEMMNG_NOCREATE(className)  \
 public:										\
 	typedef std::shared_ptr<className> Ptr;	\

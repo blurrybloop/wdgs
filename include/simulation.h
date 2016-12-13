@@ -1,20 +1,15 @@
 #ifndef _WDGS_SIMULATIONBASE_H
 #define _WDGS_SIMULATIONBASE_H
 
-#include <vector>
-#include <map>
-
-
 #include "memmng.h"
 
-#include "physics/object.h"
+#include "object.h"
+#include "body.h"
+
 #include "physics/gravity.h"
-#include "graphics/model.h"
 #include "graphics/texture.h"
 
 #include "camera.h"
-
-#include <GLFW/glfw3.h>
 
 namespace WDGS
 {

@@ -66,7 +66,6 @@ namespace WDGS
 			bar->AddRWVariable("inclination_z", TW_TYPE_DOUBLE, "Z", &object->axisInclination.z, "Наклон оси");
 
 			bar->AddRWVariable("rot_period", TW_TYPE_DOUBLE, "Период вращения", &object->rotPeriod);
-
 			
 		}
 
@@ -91,17 +90,13 @@ namespace WDGS
 		}
 
 		virtual void GetModelMatrix(glm::dmat4& mat)
-		{
-			glm::dvec4 axis = glm::rotate(glm::dmat4(1.0), object->axisInclination.x, glm::dvec3(1.0, 0.0, 0.0)) *
-				glm::rotate(glm::dmat4(1.0), object->axisInclination.y, glm::dvec3(0.0, 1.0, 0.0)) *
-				glm::rotate(glm::dmat4(1.0), object->axisInclination.z, glm::dvec3(0.0, 0.0, 1.0)) *
-				glm::dvec4(0.0, 1.0, 0.0, 1.0);
+		{			
+			glm::dquat q = glm::dquat(object->axisInclination);
+			glm::dvec3 axis = q * glm::dvec3(0.0, 1.0, 0.0);
 
+			glm::dmat4 rot = (glm::dmat4)glm::angleAxis(object->rotAngle, axis);
+			mat = glm::translate(glm::dmat4(1.0), object->worldPosition) * rot;
 
-			mat = glm::rotate(
-					glm::translate(
-						glm::dmat4(1.0), object->worldPosition),
-					object->rotAngle, glm::dvec3(axis));
 		}
 
 	public:

@@ -332,11 +332,10 @@ namespace WDGS
 					int maxlevel = 6, ccw = 1;
 
 					int step = 1;
-					for (int level = 1; level < maxlevel; ++level)
+					for (int level = 0; level < maxlevel; ++level)
 						step *= 4;
 
 					count = sizeof(octahedron) * step;
-
 
 					glBindVertexArray(Sphere::vao);
 					glBindBuffer(GL_ARRAY_BUFFER, Sphere::vbo);
@@ -360,7 +359,7 @@ namespace WDGS
 						}
 					}
 
-					for (int level = 1; level < maxlevel; level++)
+					for (int level = 0; level < maxlevel; ++level)
 					{
 						for (int i = step - 1, j = 0; i < size; i += step, ++j)
 						{

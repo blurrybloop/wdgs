@@ -19,40 +19,17 @@ namespace WDGS
 
 	void Camera::UpdateTransform()
 	{
-		glm::dmat4 rotX, rotY, rotZ;
+		glm::dquat q = glm::dquat(glm::dvec3(glm::radians(angles.x), glm::radians(angles.y), glm::radians(angles.z)));
+		glm::dvec3 up = q * glm::dvec3(0.0, 1.0, 0.0);
 
-		double cx = glm::cos(glm::radians(angles.x)), sx = glm::sin(glm::radians(angles.x));
-		double cy = glm::cos(glm::radians(angles.y)), sy = glm::sin(glm::radians(angles.y));
-		double cz = glm::cos(glm::radians(angles.z)), sz = glm::sin(glm::radians(angles.z));
-
-		rotX[0][0] = 1.0;
-		rotX[1][1] = (cx);
-		rotX[1][2] = (sx);
-		rotX[2][1] = (-sx);
-		rotX[2][2] = (cx);
-		rotX[3][3] = (1.0);
-
-		rotY[0][0] = (cy);
-		rotY[0][2] = (-sy);
-		rotY[1][1] = (1);
-		rotY[2][0] = (sy);
-		rotY[2][2] = (cy);
-		rotY[3][3] = (1);
-
-		rotZ[0][0] = (cz);
-		rotZ[0][1] = (sz);
-		rotZ[1][0] = (-sz);
-		rotZ[1][1] = (cz);
-		rotZ[2][2] = (1.0);
-		rotZ[3][3] = (1.0);
-
-		glm::dvec3 up = glm::dvec3((rotZ * rotY * rotX) * glm::dvec4(0.0, 1.0, 0.0, 0.0));
-		position = glm::dvec3(glm::translate(glm::dmat4(1.0), focusedOn->worldPosition) * rotZ * rotY * rotX * glm::dvec4(0.0, 0.0, distanceToFocus, 1.0));
+		position = 
+			glm::translate(glm::dmat4(1.0), focusedOn->worldPosition) * 
+			(glm::dmat4)q * 
+			glm::dvec4(0.0, 0.0, distanceToFocus, 1.0);
 
 		lookat = glm::lookAt(position, focusedOn->worldPosition, up);
 		projection = glm::perspective(fov, aspect, 100000.0, 5E+11);
 		transform = projection * lookat;
-
 	}
 
 	void Camera::MoveIn()

@@ -11,6 +11,7 @@
 #include "ui.h"
 
 #include "camera.h"
+#include "environment.h"
 
 namespace WDGS
 {
@@ -31,15 +32,13 @@ namespace WDGS
 
 		std::vector<Body::Ptr> models;
 
-		Graphics::Texture::Ptr environment;
-
 		Camera::Ptr camera;
 		GLint focusIndex;
 		Object* lightSource;
 		double prevX, prevY;
 
 		GLuint ubo;
-		Graphics::Cube::Ptr envCube;
+		Environment::Ptr env;
 
 		Simulation();
 
@@ -56,6 +55,18 @@ namespace WDGS
 		{
 			Simulation* sim = (Simulation*)pthis;
 			*(int*)value = sim->focusIndex;
+		}
+
+		static void TW_CALL SetEnvironment(const void * value, void * pthis)
+		{
+			Simulation* sim = (Simulation*)pthis;
+			sim->env = Environment::Create(*(int*)value);
+		}
+
+		static void TW_CALL GetEnvironment(void * value, void * pthis)
+		{
+			Simulation* sim = (Simulation*)pthis;
+			*(int*)value = sim->env->envId;
 		}
 
 		void Refresh(double time);
@@ -78,7 +89,6 @@ namespace WDGS
 		virtual void Load(std::istream& fs);
 
 	protected:
-		void RenderEnvironment();
 		void ChangeFocus(GLint newIndex);
 	};
 

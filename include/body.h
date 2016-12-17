@@ -299,18 +299,12 @@ namespace WDGS
 		virtual void Render(Camera::Ptr& cam, Light& light)
 		{
 			Program::Ptr& renderProg1 = meshes[0]->GetProgram();
-			Program::Ptr& renderProg2 = meshes[1]->GetProgram();
-
+		
 			static GLuint modelLoc = glGetUniformLocation(*renderProg1, "model");
 			static GLuint mvpLoc = glGetUniformLocation(*renderProg1, "mvp");
 			static GLuint camLoc = glGetUniformBlockIndex(*renderProg1, "Camera");
 			static GLuint lightPos = glGetUniformBlockIndex(*renderProg1, "LightSource");
-			static GLuint modelLoc2 = glGetUniformLocation(*renderProg2, "model");
-			static GLuint mvpLoc2 = glGetUniformLocation(*renderProg2, "mvp");
 
-			static GLuint camLoc2 = glGetUniformBlockIndex(*renderProg1, "Camera");
-			static GLuint lightPos2 = glGetUniformBlockIndex(*renderProg1, "LightSource");
-			static GLuint athmoLoc = glGetUniformLocation(*renderProg2, "athmoColor");
 
 			Planet* planet = (Planet*)object.get();
 
@@ -327,17 +321,31 @@ namespace WDGS
 			glUniformBlockBinding(*renderProg1, camLoc, 1);
 
 			meshes[0]->Render();
+		}
 
+		virtual void RenderAthmo(Camera::Ptr& cam, Light& light)
+		{
+			Program::Ptr& renderProg = meshes[1]->GetProgram();
+
+			static GLuint modelLoc2 = glGetUniformLocation(*renderProg, "model");
+			static GLuint mvpLoc2 = glGetUniformLocation(*renderProg, "mvp");
+
+			static GLuint camLoc2 = glGetUniformBlockIndex(*renderProg, "Camera");
+			static GLuint lightPos2 = glGetUniformBlockIndex(*renderProg, "LightSource");
+			static GLuint athmoLoc = glGetUniformLocation(*renderProg, "athmoColor");
+
+			glm::dmat4 model;
+			GetModelMatrix(model);
 			model = glm::scale(model, glm::dvec3(1.05, 1.05, 1.05));
 
-			mvp = glm::mat4(cam->GetTransform() * model);
+			glm::mat4 mvp = glm::mat4(cam->GetTransform() * model);
 
-			renderProg2->Use();
+			renderProg->Use();
 			glUniformMatrix4fv(modelLoc2, 1, GL_FALSE, glm::value_ptr(glm::mat4(model)));
 			glUniformMatrix4fv(mvpLoc2, 1, GL_FALSE, glm::value_ptr(mvp));
 
-			glUniformBlockBinding(*renderProg2, lightPos2, 0);
-			glUniformBlockBinding(*renderProg2, camLoc2, 1);
+			glUniformBlockBinding(*renderProg, lightPos2, 0);
+			glUniformBlockBinding(*renderProg, camLoc2, 1);
 
 			glUniform4fv(athmoLoc, 1, glm::value_ptr(athmoColor));
 

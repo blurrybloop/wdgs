@@ -40,6 +40,21 @@ namespace WDGS
 		bar->AddRWVariable("angleX", TW_TYPE_DOUBLE, "Поворот X", &camera->angles.x, "Камера");
 		bar->AddRWVariable("angleY", TW_TYPE_DOUBLE, "Поворот Y", &camera->angles.y, "Камера");
 
+
+		env = Environment::Create(1);
+
+
+		ComboBox::Ptr combo = ComboBox::Create("Environment");
+		combo->SetLabel("Фон");
+
+		std::vector<GLint> envIds;
+		Resources::GetEnvIds(envIds);
+
+		for (size_t i = 0; i < envIds.size(); ++i)
+			combo->AddItem(envIds[i], Resources::GetEnvString(envIds[i], "name_ru"));
+
+		bar->AddComboBox(combo, SetEnvironment, GetEnvironment, this);
+
 		glGenBuffers(1, &ubo);
 
 		glBindBuffer(GL_UNIFORM_BUFFER, ubo);
@@ -48,21 +63,6 @@ namespace WDGS
 
 		glBindBufferRange(GL_UNIFORM_BUFFER, 0, ubo, 0, 64);
 		glBindBufferRange(GL_UNIFORM_BUFFER, 1, ubo, 64, 16);
-
-		environment = Graphics::Texture::Create("res/environments/milky.dds");
-
-		Graphics::Shader::Ptr vs = Graphics::Shader::CreateFromFile(GL_VERTEX_SHADER, "res/shaders/environment.vs.glsl");
-		Graphics::Shader::Ptr fs = Graphics::Shader::CreateFromFile(GL_FRAGMENT_SHADER, "res/shaders/environment.fs.glsl");
-
-		Graphics::Program::Ptr p = Graphics::Program::Create();
-		p->AddShader(vs);
-		p->AddShader(fs);
-		p->Link();
-
-		envCube = Graphics::Cube::Create();
-		envCube->SetProgram(p);
-		envCube->AddTexture(environment, "environment");
-
 
 
 	/*	Graphics::StarModel::Ptr sun = Graphics::StarModel::Create("Sun", true);
@@ -183,29 +183,29 @@ namespace WDGS
 				(*it)->Render(camera, l);
 			}
 
-
-
 			glDisable(GL_MULTISAMPLE);
 			glDisable(GL_CULL_FACE);
 			glDisable(GL_BLEND);
 
 			glDepthFunc(GL_LEQUAL);
 
-			RenderEnvironment();
+			env->Render(camera);
 
 			glDepthFunc(GL_LESS);
-		}
+			glEnable(GL_MULTISAMPLE);
+			glEnable(GL_DEPTH_TEST);
+			glEnable(GL_CULL_FACE);
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-		void Simulation::RenderEnvironment()
-		{
-			Graphics::Program::Ptr& prog = envCube->GetProgram();
-			static GLuint vpLoc = glGetUniformLocation(*prog, "vp");
-
-			glm::mat4 vp = glm::mat4(camera->GetProjection()) * glm::mat4(glm::mat3(camera->GetLookat()));
-			prog->Use();
-			glUniformMatrix4fv(vpLoc, 1, GL_FALSE, glm::value_ptr(vp));
-
-			envCube->Render();
+			for (auto it = models.begin(); it != models.end(); ++it)
+			{
+				if ((*it)->type & Body::Rocky)
+				{
+					RockyBody* rb = (RockyBody*)(*it).get();
+					rb->RenderAthmo(camera, l);
+				}
+			}
 		}
 
 		void Simulation::OnResize(GLFWwindow*, int w, int h)

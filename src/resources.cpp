@@ -79,37 +79,57 @@ namespace WDGS
 		return ini.GetVec4(s.c_str(), propName);
 	}
 
-	void Resources::GetEnvSection(const char* envName, std::string& out)
+	void Resources::GetEnvSection(GLint envId, std::string& out)
 	{
+		char ch[15];
+		sprintf(ch, "%d", envId);
 		out = "Environment.";
-		out += envName;
+		out += ch;
 	}
 
-	std::string Resources::GetEnvString(const char* envName, const char* propName)
+	void Resources::GetEnvIds(std::vector<GLint>& v)
+	{
+		auto m = ini.GetMap();
+		const char* str = "Environment.";
+		int len = strlen(str);
+		std::string n;
+		
+		for (auto it = m.begin(); it != m.end(); ++it)
+		{
+			if (!it->first.compare(0, len, str))
+			{
+				n = it->first.substr(len);
+				v.push_back(atoi(n.c_str()));
+			}
+		}
+
+	}
+
+	const char* Resources::GetEnvString(GLint envId, const char* propName)
 	{
 		std::string s;
-		GetEnvSection(envName, s);
+		GetEnvSection(envId, s);
 		return ini.GetString(s.c_str(), propName);
 	}
 
-	double Resources::GetEnvDouble(const char* envName, const char* propName)
+	double Resources::GetEnvDouble(GLint envId, const char* propName)
 	{
 		std::string s;
-		GetEnvSection(envName, s);
+		GetEnvSection(envId, s);
 		return ini.GetDouble(s.c_str(), propName);
 	}
 
-	int Resources::GetEnvInt(const char* envName, const char* propName)
+	int Resources::GetEnvInt(GLint envId, const char* propName)
 	{
 		std::string s;
-		GetEnvSection(envName, s);
+		GetEnvSection(envId, s);
 		return ini.GetInt(s.c_str(), propName);
 	}
 
-	glm::dvec3 Resources::GetEnvVec3(const char* envName, const char* propName)
+	glm::dvec3 Resources::GetEnvVec3(GLint envId, const char* propName)
 	{
 		std::string s;
-		GetEnvSection(envName, s);
+		GetEnvSection(envId, s);
 		return ini.GetVec3(s.c_str(), propName);
 	}
 

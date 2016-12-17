@@ -30,7 +30,7 @@ namespace WDGS
 				this->path = path;
 				fs.open(path);
 				std::string from = "";
-
+			
 				while (1)
 				{
 					std::string s;
@@ -68,19 +68,20 @@ namespace WDGS
 			}
 		}
 
-		std::string GetString(const char* section, const char* key)
+		std::map <std::string, std::map<std::string, std::string>>& GetMap() { return mp; }
+
+		const char* GetString(const char* section, const char* key)
 		{
 			auto it = mp.find(section);
 			if (it != mp.end())
 			{
 				auto it2 = it->second.find(key);
 				if (it2 != it->second.end())
-					return it2->second;
+					return it2->second.c_str();
 			}
 
 			return "";
 		}
-
 
 		double GetDouble(const char* section, const char* key)
 		{

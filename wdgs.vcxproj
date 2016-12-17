@@ -40,6 +40,7 @@
     <ClInclude Include="include\camera.h" />
     <ClInclude Include="include\config.h" />
     <ClInclude Include="include\debug.h" />
+    <ClInclude Include="include\environment.h" />
     <ClInclude Include="include\graphics\light.h" />
     <ClInclude Include="include\ini.h" />
     <ClInclude Include="include\memmng.h" />

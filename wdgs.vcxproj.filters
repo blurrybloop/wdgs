@@ -111,6 +111,9 @@
     <ClInclude Include="include\simulation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\environment.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\shaders\rocky.fs.glsl">

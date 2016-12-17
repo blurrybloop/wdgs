@@ -13,6 +13,7 @@
 
 namespace WDGS
 {
+
 	using namespace Graphics;
 
 	class Body : public Saveable, public BarOwner
@@ -44,6 +45,57 @@ namespace WDGS
 			*(double*)value = glm::length(((Body*)pthis)->object->worldVelocity);
 		}
 
+		static void TW_CALL SetInclinationXCB(const void * value, void * pthis)
+		{
+			((Body*)pthis)->object->axisInclination.x = glm::radians(*(const double*)value);
+		}
+
+		static void TW_CALL GetInclinationXCB(void * value, void * pthis)
+		{
+			*(double*)value = glm::degrees(((Body*)pthis)->object->axisInclination.x);
+		}
+
+		static void TW_CALL SetInclinationYCB(const void * value, void * pthis)
+		{
+			((Body*)pthis)->object->axisInclination.y = glm::radians(*(const double*)value);
+		}
+
+		static void TW_CALL GetInclinationYCB(void * value, void * pthis)
+		{
+			*(double*)value = glm::degrees(((Body*)pthis)->object->axisInclination.y);
+		}
+
+		static void TW_CALL SetInclinationZCB(const void * value, void * pthis)
+		{
+			((Body*)pthis)->object->axisInclination.z = glm::radians(*(const double*)value);
+		}
+
+		static void TW_CALL GetInclinationZCB(void * value, void * pthis)
+		{
+			*(double*)value = glm::degrees(((Body*)pthis)->object->axisInclination.z);
+		}
+
+		static void TW_CALL SetInclinationCB(const void * value, void * pthis)
+		{
+			glm::dquat q;
+			const double* p = (const double*)value;
+
+			for (int i = 0; i < 4; ++i)
+				q[i] = p[i];
+
+			((Body*)pthis)->object->axisInclination = glm::eulerAngles(q);
+		}
+
+		static void TW_CALL GetInclinationCB(void * value, void * pthis)
+		{
+			glm::dquat q = glm::dquat(((Body*)pthis)->object->axisInclination);
+
+			double* p = (double*)value;
+
+			for (int i = 0; i < 4; ++i)
+				p[i] = q[i];
+		}
+
 		virtual void LoadUIBar()
 		{
 			bar = Bar::Create(resName.c_str());
@@ -61,12 +113,13 @@ namespace WDGS
 			bar->AddRWVariable("velocity_y", TW_TYPE_DOUBLE, "Y", &object->worldVelocity.y, "Скорость XYZ");
 			bar->AddRWVariable("velocity_z", TW_TYPE_DOUBLE, "Z", &object->worldVelocity.z, "Скорость XYZ");
 
-			bar->AddRWVariable("inclination_x", TW_TYPE_DOUBLE, "X", &object->axisInclination.x, "Наклон оси");
-			bar->AddRWVariable("inclination_y", TW_TYPE_DOUBLE, "Y", &object->axisInclination.y, "Наклон оси");
-			bar->AddRWVariable("inclination_z", TW_TYPE_DOUBLE, "Z", &object->axisInclination.z, "Наклон оси");
+			bar->AddCBVariable("inclination", TW_TYPE_QUAT4D, " ", SetInclinationCB, GetInclinationCB, this, "Наклон оси");
 
-			bar->AddRWVariable("rot_period", TW_TYPE_DOUBLE, "Период вращения", &object->rotPeriod);
-			
+			bar->AddCBVariable("inclination_x", TW_TYPE_DOUBLE, "X", SetInclinationXCB, GetInclinationXCB, this, "Наклон оси");
+			bar->AddCBVariable("inclination_y", TW_TYPE_DOUBLE, "Y", SetInclinationYCB, GetInclinationYCB, this, "Наклон оси");
+			bar->AddCBVariable("inclination_z", TW_TYPE_DOUBLE, "Z", SetInclinationZCB, GetInclinationZCB, this, "Наклон оси");
+
+			bar->AddRWVariable("rot_period", TW_TYPE_DOUBLE, "Период вращения", &object->rotPeriod);			
 		}
 
 		virtual void LoadObject(const GLchar* name)

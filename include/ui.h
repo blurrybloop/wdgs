@@ -60,17 +60,70 @@ namespace WDGS
 
 	};
 
+	class ComboBox
+	{
+		DECLARE_MEMMNG(ComboBox)
+
+		static Ptr Create(const char* name)
+		{
+			Ptr p = Create();
+			p->typeName = name;
+			p->comboType = TwDefineEnum(p->typeName.c_str(), p->comboEV.data(), p->comboEV.size());
+			return p;
+		}
+
+	protected:
+		TwType comboType;
+		std::vector<TwEnumVal> comboEV;
+		std::string typeName;
+		std::string label;
+
+	public:
+
+		void SetLabel(const char* label)
+		{
+			this->label = label;
+		}
+
+		const char* GetLabel()
+		{
+			return label.c_str();
+		}
+
+		void AddItem(int key, const char* label)
+		{
+			TwEnumVal ev;
+			ev.Value = key;
+			ev.Label = label;
+			comboEV.push_back(ev);
+
+			comboType = TwDefineEnum(typeName.c_str(), comboEV.data(), comboEV.size());
+		}
+
+		TwType GetType()
+		{
+			return comboType;
+		}
+
+		const char* GetTypeName()
+		{
+			return typeName.c_str();
+		}
+
+	};
+
 	class Bar
 	{
-		DECLARE_MEMMNG(Bar);
+		DECLARE_MEMMNG(Bar)
 
 		static Ptr Create(const char* name)
 		{
 			Ptr p = Create();
 			p->bar = TwNewBar(name);
+			TwCopyStdStringToClientFunc(CopyStdStringToClient);
 
 			std::string def = name;
-			def += " color='0 0 0' alpha=128 text=light iconified=true size='340 400' valueswidth=120 refresh=0.2";
+			def += " color='0 0 0' alpha=230 text=light iconified=true size='340 400' valueswidth=120 refresh=0.2";
 			TwDefine(def.c_str());
 
 			return p;
@@ -80,6 +133,11 @@ namespace WDGS
 		TwBar* bar;
 
 		Bar() { bar = 0; }
+
+		static void TW_CALL CopyStdStringToClient(std::string& destinationClientString, const std::string& sourceLibraryString)
+		{
+			destinationClientString = sourceLibraryString;
+		}
 
 	public:
 		void SetLabel(const char* label)
@@ -115,6 +173,15 @@ namespace WDGS
 
 			if (group)
 				TwSetParam(bar, name, "group", TW_PARAM_CSTRING, 1, group);
+
+			int shv = 1;
+			TwSetParam(bar, name, "opened", TW_PARAM_INT32, 1, &shv);
+
+		}
+
+		void AddComboBox(ComboBox::Ptr combo, TwSetVarCallback cbs, TwGetVarCallback cbg, void* data, const char* group = 0)
+		{
+			AddCBVariable(combo->GetTypeName(), combo->GetType(), combo->GetLabel(), cbs, cbg, data, group);
 		}
 
 		void AddSeparator(const char* name, const char* group = 0)

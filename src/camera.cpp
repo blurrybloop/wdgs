@@ -7,8 +7,8 @@ namespace WDGS
 	void Camera::FocusOn(Object::Ptr& obj, double distance, double minDistance)
 	{
 		this->focusedOn = obj;
-		this->distanceToFocus = distance;
 		this->minDistance = minDistance;
+		this->distanceToFocus = glm::max(distance, minDistance);
 		UpdateTransform();
 	}
 

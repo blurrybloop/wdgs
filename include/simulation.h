@@ -8,18 +8,22 @@
 
 #include "physics/gravity.h"
 #include "graphics/texture.h"
+#include "ui.h"
 
 #include "camera.h"
 
 namespace WDGS
 {
-	class Simulation : public Saveable
+	class Simulation : public Saveable, public BarOwner
 	{
 		DECLARE_MEMMNG(Simulation)
 
 		static Ptr CreateFromResource(const char* name);
 
 	protected:
+
+		ComboBox::Ptr comboObjects;
+
 		double timestep;
 		double prevTime;
 
@@ -30,7 +34,7 @@ namespace WDGS
 		Graphics::Texture::Ptr environment;
 
 		Camera::Ptr camera;
-		GLuint focusIndex;
+		GLint focusIndex;
 		Object* lightSource;
 		double prevX, prevY;
 
@@ -41,6 +45,18 @@ namespace WDGS
 
 	public:
 		~Simulation();
+
+		static void TW_CALL SetFocusedObject(const void * value, void * pthis)
+		{
+			Simulation* sim = (Simulation*)pthis;
+			sim->ChangeFocus(*(int*)value);
+		}
+
+		static void TW_CALL GetFocusedObject(void * value, void * pthis)
+		{
+			Simulation* sim = (Simulation*)pthis;
+			*(int*)value = sim->focusIndex;
+		}
 
 		void Refresh(double time);
 		void Render();
@@ -63,6 +79,7 @@ namespace WDGS
 
 	protected:
 		void RenderEnvironment();
+		void ChangeFocus(GLint newIndex);
 	};
 
 }

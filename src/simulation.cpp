@@ -25,6 +25,20 @@ namespace WDGS
 
 		camera = Camera::Create();
 		prevX = prevY = -1.0;
+		focusIndex = -1;
+
+		bar = Bar::Create("Simulation");
+
+		bar->SetLabel("Свойства симуляции");
+		bar->AddRWVariable("timestep", TW_TYPE_DOUBLE, "Шаг времени", &timestep);
+		
+		comboObjects = ComboBox::Create("objects");
+		comboObjects->SetLabel("Фокус");
+		bar->AddComboBox(comboObjects, SetFocusedObject, GetFocusedObject, this, "Камера");
+		bar->AddRWVariable("distanceToFocus", TW_TYPE_DOUBLE, "Расстояние до фокуса", &camera->distanceToFocus, "Камера");
+
+		bar->AddRWVariable("angleX", TW_TYPE_DOUBLE, "Поворот X", &camera->angles.x, "Камера");
+		bar->AddRWVariable("angleY", TW_TYPE_DOUBLE, "Поворот Y", &camera->angles.y, "Камера");
 
 		glGenBuffers(1, &ubo);
 
@@ -91,6 +105,7 @@ namespace WDGS
 		{
 			models.push_back(model);
 			gc->AddMP(model->object.get());
+			comboObjects->AddItem(models.size() - 1, model->object->name.c_str());
 		}
 
 		void Simulation::RemoveModel(Body::Ptr& model)
@@ -214,12 +229,7 @@ namespace WDGS
 					camera->angles.x -= 10.0;
 				else if (key == GLFW_KEY_TAB)
 				{
-					/*auto it = models.find(camera->GetFocus().get());
-					if (it != models.end())
-					{
-						Object::Ptr p((Object*)(++it)->first);
-						camera->FocusOn(p);
-					}*/
+					ChangeFocus(focusIndex + 1);
 				}
 
 				camera->angles.y = SimHelpers::ClampCyclic(camera->angles.y, 0.0, 360.0);
@@ -329,6 +339,23 @@ namespace WDGS
 
 			camera->FocusOn(models[focusIndex]->object, d, md);
 			models[focusIndex]->Maximize();
+		}
 
+		void Simulation::ChangeFocus(GLint newIndex)
+		{
+			if (this->models.empty()) return;
+
+			if (this->focusIndex != -1)
+				this->models[this->focusIndex]->Minimize();
+
+			if (newIndex >= models.size() || newIndex < 0)
+				this->focusIndex = 0;
+			else
+				this->focusIndex = newIndex;
+
+			Object::Ptr o = this->models[this->focusIndex]->object;
+			this->camera->FocusOn(o, this->camera->distanceToFocus, 1.2 * ((SphericObject*)o.get())->radius);
+
+			this->models[this->focusIndex]->Maximize();
 		}
 }

@@ -9,6 +9,7 @@ namespace WDGS
 
 	Simulation::Ptr Application::sim(0);
 	UI::Ptr Application::ui(0);
+	Bar::Ptr Application::bar(0);
 
 	void APIENTRY Application::DebugCallback(GLenum source,
 		GLenum type,
@@ -24,6 +25,21 @@ namespace WDGS
 	int Application::OnStartup()
 	{
 		ui = UI::Create();
+
+		bar = Bar::Create("Application");
+		bar->SetLabel("Свойства приложения");
+		bar->AddCBVariable("fullscreen", TW_TYPE_BOOL32, "Полноэкранный режим", SetFullscreen, GetFullscreen, 0);
+		
+		ComboBox::Ptr combo = ComboBox::Create("MSAA");
+		combo->SetLabel("Сглаживание (MSAA)");
+		combo->AddItem(1, "Нет");
+		combo->AddItem(2, "2x");
+		combo->AddItem(4, "4x");
+		combo->AddItem(8, "8x");
+
+		bar->AddComboBox(combo, SetMSAA, GetMSAA, 0);
+		bar->AddCBVariable("VSync", TW_TYPE_BOOL32, "Вертикальная синхронизация", SetVSync, GetVSync, 0);
+
 		sim = Simulation::CreateFromResource("0");
 
 		//sim->SetTimestep(10 * 24 * 60.0 * 60.0);
@@ -130,7 +146,7 @@ namespace WDGS
 			h = mode->height;
 		}
 
-		glfwWindowHint(GLFW_SAMPLES, 8);
+		glfwWindowHint(GLFW_SAMPLES, glm::max(Config::GetInt("MSAA"), 1));
 		glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
 
 		//создание окна
@@ -194,6 +210,8 @@ namespace WDGS
 			glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
 		}
 
+		glfwSwapInterval(Config::GetInt("VSync"));
+
 		running = true;
 	
 		if (OnStartup())
@@ -231,13 +249,12 @@ namespace WDGS
 		Config::SetInt("WindowX", x);
 		Config::SetInt("WindowY", y);
 
-		if (!fullscreen)
+		if (!Config::GetInt("Fullscreen"))
 		{
 			Config::SetInt("WindowWidth", w);
 			Config::SetInt("WindowHeight", h);
 		}
 
-		Config::SetInt("Fullscreen", fullscreen);
 		Config::Save();
 
 		glfwDestroyWindow(window);

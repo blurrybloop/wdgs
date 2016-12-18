@@ -100,14 +100,21 @@ namespace WDGS
 		virtual void Save(std::ostream& os)
 		{
 			Object::Save(os);
+			int p = os.tellp();
+			double huy = 2439711.1;
+			char* a = (char*)&huy;
+
 			os.write((char*)&radius, sizeof(radius));
+			int p2 = os.tellp();
 			//os << radius;
 		}
 
 		virtual void Load(std::istream& is)
 		{
 			Object::Load(is);
+			int p = is.tellg();
 			is.read((char*)&radius, sizeof(radius));
+			int p2 = is.tellg();
 			//is >> radius;
 		}
 	};

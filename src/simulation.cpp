@@ -63,7 +63,7 @@ namespace WDGS
 		bar->AddRWVariable("angleY", TW_TYPE_DOUBLE, "Поворот Y", &camera->angles.y, "Камера");
 
 
-		env = Environment::Create(1);
+		//env = Environment::Create(1);
 
 
 		ComboBox::Ptr combo = ComboBox::Create("Environment");
@@ -87,7 +87,7 @@ namespace WDGS
 		glBindBufferRange(GL_UNIFORM_BUFFER, 1, ubo, 256, 16);
 
 
-		StarModel::Ptr sun = StarModel::Create("Sun", true);
+		/*StarModel::Ptr sun = StarModel::Create("Sun", true);
 
 		sun->object->worldPosition = glm::dvec3(0.0, 0.0, 0.0);
 		sun->object->worldVelocity = glm::dvec3(0.0, 0.0, 0.0);
@@ -102,20 +102,58 @@ namespace WDGS
 		if (earth->object->worldPosition.z < 0.0)
 			earth->object->worldVelocity.x = -earth->object->worldVelocity.x;
 
-		earth->SetAthmoColor(glm::vec4(0.0f, 0.4f, 1.0f, 0.2f));
+
+		RockyBody::Ptr mars = RockyBody::Create("Mars", true);
+
+		mars->object->worldPosition = glm::dvec3(0.0, 0.0, 2.2794382E+11);
+		mars->object->worldVelocity = glm::dvec3(0.0, 0.0, 0.0);
+
+
+		mars->object->worldVelocity.x = glm::sqrt(glm::abs(Physics::GravityController::gravityConst * sun->object->mass / mars->object->worldPosition.z));
+		if (mars->object->worldPosition.z < 0.0)
+			mars->object->worldVelocity.x = -mars->object->worldVelocity.x;
+
+
+		RockyBody::Ptr mercury = RockyBody::Create("Mercury", true);
+
+		mercury->object->worldPosition = glm::dvec3(0.0, 0.0, 5E+10);
+		mercury->object->worldVelocity = glm::dvec3(0.0, 0.0, 0.0);
+
+
+		mercury->object->worldVelocity.x = glm::sqrt(glm::abs(Physics::GravityController::gravityConst * sun->object->mass / mercury->object->worldPosition.z));
+		if (mercury->object->worldPosition.z < 0.0)
+			mercury->object->worldVelocity.x = -mercury->object->worldVelocity.x;
+
+		RockyBody::Ptr venus = RockyBody::Create("Venus", true);
+
+		venus->object->worldPosition = glm::dvec3(0.0, 0.0, 1.0820893E+11);
+		venus->object->worldVelocity = glm::dvec3(0.0, 0.0, 0.0);
+
+
+		venus->object->worldVelocity.x = glm::sqrt(glm::abs(Physics::GravityController::gravityConst * sun->object->mass / venus->object->worldPosition.z));
+		if (venus->object->worldPosition.z < 0.0)
+			venus->object->worldVelocity.x = -venus->object->worldVelocity.x;
+
 
 		Body::Ptr model = sun;
 
 		AddModel(model);
 
+		model = mercury;
+		AddModel(model);
+		model = venus;
+		AddModel(model);
 		model = earth;
 		AddModel(model);
+		model = mars;
+		AddModel(model);
+
 		double r = std::static_pointer_cast<SphericObject>(earth->object)->radius;
 
 		camera->FocusOn(model->object, r + 30000000.0, 1.2 * r);
 		focusIndex = 1;
 
-		lightSource = (Star*)sun->object.get();
+		lightSource = (Star*)sun->object.get();*/
 	}
 
 	Simulation::~Simulation()
@@ -185,14 +223,14 @@ namespace WDGS
 
 			glEnable(GL_MULTISAMPLE);
 			glEnable(GL_DEPTH_TEST);
-			glEnable(GL_CULL_FACE);
+			glDisable(GL_CULL_FACE);
 			glDisable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 
 			Graphics::Light l;
 			l.position = lightSource->worldPosition;
-			l.ambient = glm::vec3(0.01f, 0.01f, 0.01f);
+			l.ambient = glm::vec3(0.05f, 0.05f, 0.05f);
 			l.diffuse = glm::vec3(50.0f * (lightSource->luminosity / SUN_LUMINOSITY),40.0f* (lightSource->luminosity / SUN_LUMINOSITY),40.0f* (lightSource->luminosity / SUN_LUMINOSITY));
 			l.specular = glm::vec3(0.4f, 0.3f, 0.3f);
 
@@ -236,6 +274,7 @@ namespace WDGS
 
 			glBindFramebuffer(GL_READ_FRAMEBUFFER, fboMs);
 			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboHdr);
+
 			glBlitFramebuffer(0, 0, fboW, fboH, 0, 0, fboW, fboH, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -398,6 +437,7 @@ namespace WDGS
 			os.write((char*)glm::value_ptr(camera->angles), sizeof(camera->angles));
 
 			os.write((char*)&timestep, sizeof(timestep));
+			os.write((char*)&env->envId, sizeof(env->envId));
 		}
 
 		void Simulation::Load(std::istream& is)
@@ -440,6 +480,10 @@ namespace WDGS
 			is.read((char*)glm::value_ptr(camera->angles), sizeof(camera->angles));
 
 			is.read((char*)&timestep, sizeof(timestep));
+
+			int envId;
+			is.read((char*)&envId, sizeof(envId));
+			env = Environment::Create(envId);
 
 			camera->FocusOn(models[focusIndex]->object, d, md);
 			models[focusIndex]->Maximize();

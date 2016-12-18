@@ -135,6 +135,11 @@ namespace WDGS
 
 		public:
 
+			GLenum GetTarget()
+			{
+				return target;
+			}
+
 			void Bind()
 			{
 				if (id)

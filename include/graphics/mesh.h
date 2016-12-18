@@ -47,6 +47,18 @@ namespace WDGS
 				}
 			}
 
+			void UnbindTextures()
+			{
+				renderProg->Use();
+
+				for (GLuint i = 0; i < this->textures.size(); i++)
+				{
+					glActiveTexture(GL_TEXTURE0 + i);
+					glUniform1i(textures[i].location, 0);
+					glBindTexture(this->textures[i].tex->GetTarget(), 0);
+				}
+			}
+
 			void SetProgram(Program::Ptr& prog)
 			{
 				renderProg = prog;
@@ -117,6 +129,8 @@ namespace WDGS
 
 				glBindVertexArray(GetVAO());
 				glDrawArrays(GetMode(), 0, GetCount());
+
+				//UnbindTextures();
 			}
 
 			void ClearTextures()
@@ -332,7 +346,7 @@ namespace WDGS
 					glGenVertexArrays(1, &Sphere::vao);
 					glGenBuffers(1, &Sphere::vbo);
 
-					int maxlevel = 6, ccw = 1;
+					int maxlevel = 5, ccw = 1;
 
 					int step = 1;
 					for (int level = 0; level < maxlevel; ++level)

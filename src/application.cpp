@@ -40,10 +40,10 @@ namespace WDGS
 		bar->AddComboBox(combo, SetMSAA, GetMSAA, 0);
 		bar->AddCBVariable("VSync", TW_TYPE_BOOL32, "Вертикальная синхронизация", SetVSync, GetVSync, 0);
 
-		//sim = Simulation::CreateFromResource("0");
-		sim = Simulation::Create();
+		sim = Simulation::CreateFromResource("0");
+		//sim = Simulation::Create();
 
-		sim->SetTimestep(10 * 24 * 60.0 * 60.0);
+		//sim->SetTimestep(24 * 60.0 * 60.0);
 
 		return 1;
 	}
@@ -66,8 +66,9 @@ namespace WDGS
 		if (h != 0)
 		{
 			glViewport(0, 0, w, h);
-			sim->OnResize(wnd, w, h);
 			ui->OnResize(w, h);
+			sim->OnResize(wnd, w, h);
+			
 		}
 	}
 
@@ -222,6 +223,11 @@ namespace WDGS
 		{
 			glfwShowWindow(window);
 			OnResize(window, w, h);
+
+			/*std::ofstream os;
+			os.open("res/simulations/solar.sim", std::ios::binary);
+			sim->Save(os);
+			os.close();*/
 
 			//std::ofstream fs;
 			//fs.open("res/simulations/solar.sim", std::ios::binary);

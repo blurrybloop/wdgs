@@ -235,19 +235,37 @@ namespace WDGS
 
 			Sphere::Ptr sphereMesh = Sphere::Create();
 
-			std::string path = Resources::GetModelPath() + Resources::GetModelString(name, this->type, "tex_path");
-			sphereMesh->AddTexturesFromFolder(path.c_str());
-
 			Program::Ptr prog = Program::Create();
-
 			Shader::Ptr vs = Shader::CreateFromResource(GL_VERTEX_SHADER, "rocky");
 			Shader::Ptr fs = Shader::CreateFromResource(GL_FRAGMENT_SHADER, "rocky");
 
 			prog->AddShader(vs);
 			prog->AddShader(fs);
 			prog->Link();
+			prog->Use();
 
 			sphereMesh->SetProgram(prog);
+
+			std::string path = Resources::GetModelPath() + Resources::GetModelString(name, this->type, "tex_path");
+			std::string tex_path = path + "surf_diffuse.dds";
+			Graphics::Texture::Ptr tex = Graphics::Texture::Create(tex_path.c_str());
+			if (*tex) sphereMesh->AddTexture(tex, "surf_diffuse");
+
+			tex_path = path + "surf_specular.dds";
+			tex = Graphics::Texture::Create(tex_path.c_str());
+			if (*tex) sphereMesh->AddTexture(tex, "surf_specular");
+			glUniform1i(glGetUniformLocation(*prog, "has_specular"), *tex);
+
+			tex_path = path + "surf_emission.dds";
+			tex = Graphics::Texture::Create(tex_path.c_str());
+			if (*tex) sphereMesh->AddTexture(tex, "surf_emission");
+			glUniform1i(glGetUniformLocation(*prog, "has_emission"), *tex);
+
+			tex_path = path + "surf_clouds.dds";
+			tex = Graphics::Texture::Create(tex_path.c_str());
+			if (*tex) sphereMesh->AddTexture(tex, "surf_clouds");
+			glUniform1i(glGetUniformLocation(*prog, "has_clouds"), *tex);
+
 
 			this->meshes.push_back(sphereMesh);
 
@@ -261,6 +279,8 @@ namespace WDGS
 			prog->AddShader(vs);
 			prog->AddShader(fs);
 			prog->Link();
+
+			prog->Use();
 
 			sphereMesh->SetProgram(prog);
 			this->meshes.push_back(sphereMesh);
@@ -326,6 +346,8 @@ namespace WDGS
 
 		virtual void RenderAthmo(Camera::Ptr& cam, Light& light)
 		{
+			if (athmoColor.a == 0.0) return;
+
 			Program::Ptr& renderProg = meshes[1]->GetProgram();
 
 			static GLuint modelLoc2 = glGetUniformLocation(*renderProg, "model");

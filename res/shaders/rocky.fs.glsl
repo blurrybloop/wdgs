@@ -42,6 +42,9 @@ void main(void)
 	vec4 clouds = vec4(1.0, 1.0, 1.0, texture(surf_clouds, fs_in.tc));
 	vec4 diffuse = vec4(ls.diffuse * diff, 1.0) * (surface * (1 - clouds.a) + clouds * clouds.a);
 
+	float distance = length(fs_in.fragPos - ls.position);
+	diffuse *= 1.0f / (1.0 + 1E-21 * distance + 4E-22 * (distance * distance));
+
 	// Specular
 	vec3 viewDir = normalize(cam.position - fs_in.fragPos);
 	vec3 reflectDir = reflect(-lightDir, norm);

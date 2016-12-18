@@ -40,9 +40,10 @@ namespace WDGS
 		bar->AddComboBox(combo, SetMSAA, GetMSAA, 0);
 		bar->AddCBVariable("VSync", TW_TYPE_BOOL32, "Вертикальная синхронизация", SetVSync, GetVSync, 0);
 
-		sim = Simulation::CreateFromResource("0");
+		//sim = Simulation::CreateFromResource("0");
+		sim = Simulation::Create();
 
-		//sim->SetTimestep(10 * 24 * 60.0 * 60.0);
+		sim->SetTimestep(10 * 24 * 60.0 * 60.0);
 
 		return 1;
 	}
@@ -146,7 +147,7 @@ namespace WDGS
 			h = mode->height;
 		}
 
-		glfwWindowHint(GLFW_SAMPLES, glm::max(Config::GetInt("MSAA"), 1));
+		//glfwWindowHint(GLFW_SAMPLES, glm::max(Config::GetInt("MSAA"), 1));
 		glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
 
 		//создание окна
@@ -155,13 +156,16 @@ namespace WDGS
 			fullscreen ? glfwGetPrimaryMonitor() : NULL,
 			NULL);
 
-		glfwSetWindowPos(window, Config::GetInt("WindowX"), Config::GetInt("WindowY"));
-
 		if (!window)
 		{
 			OnError("Failed to open window\n");
+			TwTerminate();
 			return 0;
 		}
+
+
+		glfwSetWindowPos(window, Config::GetInt("WindowX"), Config::GetInt("WindowY"));
+
 
 		//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
@@ -199,7 +203,7 @@ namespace WDGS
 		glfwSetScrollCallback(window, OnMouseWheel);
 		glfwSetCharCallback(window, OnChar);
 			
-		if (GL_VERSION_4_3)
+		if (glewIsSupported("GL_VERSION_4_3"))
 		{
 			glDebugMessageCallback((GLDEBUGPROC)DebugCallback, 0);
 			glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);

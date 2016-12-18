@@ -17,12 +17,19 @@ layout(std140) uniform Camera
 } cam;
 
 in vec3 normal;
+in vec3 fragPos;
 
 out vec4 color;
 
 void main(void)
 {
+
 	//Emission
-	vec4 emission = texture(surf_emission, normal);
-	color = emission;
+	vec3 emission = vec3(texture(surf_emission, normal)) * ls.diffuse;
+
+	float distance = length(fragPos - cam.position);
+	emission *= 1.0f / (1.0 + 1E-21 * distance + 4E-22 * (distance * distance));
+
+
+	color = vec4(emission, 1.0);
 }

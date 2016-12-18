@@ -140,5 +140,11 @@
     <None Include="res\shaders\environment.vs.glsl">
       <Filter>Resource Files\Shaders</Filter>
     </None>
+    <None Include="res\shaders\hdr.fs.glsl">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="res\shaders\hdr.vs.glsl">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

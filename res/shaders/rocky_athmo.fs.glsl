@@ -27,7 +27,7 @@ out vec4 color;
 void main(void)
 {
 	// Ambient
-	vec4 ambient = vec4(ls.ambient, 1.0) * athmoColor;
+	vec3 ambient = ls.ambient * athmoColor.rgb;
 
 	// Diffuse 
 	vec3 norm = normalize(fs_in.normal);
@@ -35,7 +35,10 @@ void main(void)
 
 	vec3 lightDir = normalize(ls.position - fs_in.fragPos);
 	float diff = max(dot(norm, lightDir), 0.0);
-	vec4 diffuse = vec4(ls.diffuse * diff, 1.0) * athmoColor;
+	vec3 diffuse = ls.diffuse * diff * athmoColor.rgb;
+
+	float distance = length(fs_in.fragPos - ls.position);
+	diffuse *= 1.0f / (1.0 + 1E-21 * distance + 4E-22 * (distance * distance));
 
 	//vec3 huy = (fs_in.projPos);
 	//huy.z = centerPos.z;
@@ -46,6 +49,5 @@ void main(void)
 	//float epsilon = outerAngle - innerAngle;
 	//float intensity = clamp((outerAngle - theta) / epsilon, 0.0, 1.0);
 
-	color = ambient + diffuse;
-	//color.a *= intensity;
+	color = vec4(ambient + diffuse, athmoColor.a);
 }

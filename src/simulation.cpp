@@ -1,6 +1,9 @@
 #include "pch.h"
 #include "simulation.h"
 #include "simhelpers.h"
+#include "config.h"
+
+#define SUN_LUMINOSITY 3.828E+26
 
 namespace WDGS
 {
@@ -26,6 +29,25 @@ namespace WDGS
 		camera = Camera::Create();
 		prevX = prevY = -1.0;
 		focusIndex = -1;
+
+		fboHdr = 0;
+		fboMs = 0;
+		rboDepthMs = 0;
+		fboW = fboH = 0;
+
+		screen = Graphics::Quad::Create();
+
+		Graphics::Shader::Ptr vs = Graphics::Shader::CreateFromResource(GL_VERTEX_SHADER, "hdr");
+		Graphics::Shader::Ptr fs = Graphics::Shader::CreateFromResource(GL_FRAGMENT_SHADER, "hdr");
+
+		Graphics::Program::Ptr hdrProg = Graphics::Program::Create();
+
+		hdrProg->AddShader(vs);
+		hdrProg->AddShader(fs);
+		hdrProg->Link();
+
+		screen->SetProgram(hdrProg);
+
 
 		bar = Bar::Create("Simulation");
 
@@ -58,19 +80,19 @@ namespace WDGS
 		glGenBuffers(1, &ubo);
 
 		glBindBuffer(GL_UNIFORM_BUFFER, ubo);
-		glBufferData(GL_UNIFORM_BUFFER, 80, NULL, GL_DYNAMIC_DRAW);
+		glBufferData(GL_UNIFORM_BUFFER, 300, NULL, GL_DYNAMIC_DRAW);
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 		glBindBufferRange(GL_UNIFORM_BUFFER, 0, ubo, 0, 64);
-		glBindBufferRange(GL_UNIFORM_BUFFER, 1, ubo, 64, 16);
+		glBindBufferRange(GL_UNIFORM_BUFFER, 1, ubo, 256, 16);
 
 
-	/*	Graphics::StarModel::Ptr sun = Graphics::StarModel::Create("Sun", true);
+		StarModel::Ptr sun = StarModel::Create("Sun", true);
 
 		sun->object->worldPosition = glm::dvec3(0.0, 0.0, 0.0);
 		sun->object->worldVelocity = glm::dvec3(0.0, 0.0, 0.0);
 
-		Graphics::RockyBody::Ptr earth = Graphics::RockyBody::Create("Earth", true);
+		RockyBody::Ptr earth = RockyBody::Create("Earth", true);
 
 		earth->object->worldPosition = glm::dvec3(0.0, 0.0, 149598261000.0);
 		earth->object->worldVelocity = glm::dvec3(0.0, 0.0, 0.0);
@@ -82,7 +104,7 @@ namespace WDGS
 
 		earth->SetAthmoColor(glm::vec4(0.0f, 0.4f, 1.0f, 0.2f));
 
-		Graphics::Body::Ptr model = sun;
+		Body::Ptr model = sun;
 
 		AddModel(model);
 
@@ -93,12 +115,15 @@ namespace WDGS
 		camera->FocusOn(model->object, r + 30000000.0, 1.2 * r);
 		focusIndex = 1;
 
-		lightSource = sun->object.get();*/
+		lightSource = (Star*)sun->object.get();
 	}
 
 	Simulation::~Simulation()
 	{
 		glDeleteBuffers(1, &ubo);
+		glDeleteFramebuffers(1, &fboHdr);
+		glDeleteFramebuffers(1, &fboMs);
+		glDeleteRenderbuffers(1, &rboDepthMs);
 	}
 
 		void Simulation::AddModel(Body::Ptr& model)
@@ -153,7 +178,7 @@ namespace WDGS
 		{
 			camera->UpdateTransform();
 
-			GLfloat color[3] = { 0.0f, 0.0f, 0.0f };
+			glBindFramebuffer(GL_FRAMEBUFFER, fboMs);
 
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -161,13 +186,14 @@ namespace WDGS
 			glEnable(GL_MULTISAMPLE);
 			glEnable(GL_DEPTH_TEST);
 			glEnable(GL_CULL_FACE);
-			glEnable(GL_BLEND);
+			glDisable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 
 			Graphics::Light l;
 			l.position = lightSource->worldPosition;
-			l.ambient = glm::vec3(0.05f, 0.05f, 0.05f);
-			l.diffuse = glm::vec3(1.0f, 0.9f, 0.9f);
+			l.ambient = glm::vec3(0.01f, 0.01f, 0.01f);
+			l.diffuse = glm::vec3(50.0f * (lightSource->luminosity / SUN_LUMINOSITY),40.0f* (lightSource->luminosity / SUN_LUMINOSITY),40.0f* (lightSource->luminosity / SUN_LUMINOSITY));
 			l.specular = glm::vec3(0.4f, 0.3f, 0.3f);
 
 			glBufferSubData(GL_UNIFORM_BUFFER, 0, 16, glm::value_ptr(l.position));
@@ -176,7 +202,8 @@ namespace WDGS
 			glBufferSubData(GL_UNIFORM_BUFFER, 48, 16, glm::value_ptr(l.specular));
 
 			glm::vec3 cp = glm::vec3(camera->position);
-			glBufferSubData(GL_UNIFORM_BUFFER, 64, 16, glm::value_ptr(cp));
+
+			glBufferSubData(GL_UNIFORM_BUFFER, 256, 16, glm::value_ptr(cp));
 
 			for (auto it = models.begin(); it != models.end(); ++it)
 			{
@@ -206,12 +233,89 @@ namespace WDGS
 					rb->RenderAthmo(camera, l);
 				}
 			}
+
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, fboMs);
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboHdr);
+			glBlitFramebuffer(0, 0, fboW, fboH, 0, 0, fboW, fboH, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+			glDisable(GL_MULTISAMPLE);
+			glDisable(GL_CULL_FACE);
+			glDisable(GL_BLEND);
+			glDisable(GL_DEPTH_TEST);
+
+
+			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+			screen->Render();
+		}
+
+		void Simulation::CreateSceenBuffers(int w, int h, int samples)
+		{
+			fboW = w;
+			fboH = h;
+
+			glDeleteFramebuffers(1, &fboHdr);
+			glDeleteFramebuffers(1, &fboMs);
+			glDeleteRenderbuffers(1, &rboDepthMs);
+
+			fboMs = 0;
+			rboDepthMs = 0;
+
+			glGenFramebuffers(1, &fboHdr);
+
+			if (samples > 1)
+			{
+				glGenFramebuffers(1, &fboMs);
+
+				Graphics::Texture::Ptr tex = Graphics::Texture::Create(GL_TEXTURE_2D_MULTISAMPLE);
+				glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, *tex);
+
+				glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, GL_RGBA16F, fboW, fboH, GL_TRUE);
+
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+				glGenRenderbuffers(1, &rboDepthMs);
+				glBindRenderbuffer(GL_RENDERBUFFER, rboDepthMs);
+				glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, GL_DEPTH_COMPONENT, fboW, fboH);
+
+				glBindFramebuffer(GL_FRAMEBUFFER, fboMs);
+				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, *tex, 0);
+				glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepthMs);
+
+				if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+					cdbg << "Framebuffer not complete!" << std::endl;
+				glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			}
+
+			Graphics::Texture::Ptr tex = Graphics::Texture::Create(GL_TEXTURE_2D);
+			screen->ClearTextures();
+			screen->AddTexture(tex, "screen");
+
+			glBindTexture(GL_TEXTURE_2D, *tex);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, fboW, fboH, 0, GL_RGBA, GL_FLOAT, NULL);
+
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+			glBindFramebuffer(GL_FRAMEBUFFER, fboHdr);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, *tex, 0);
+
+			if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+				cdbg << "Framebuffer not complete!" << std::endl;
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		}
 
 		void Simulation::OnResize(GLFWwindow*, int w, int h)
 		{
 			camera->aspect = (double)w / h;
 			camera->fov = 45.0;
+
+			CreateSceenBuffers(w, h, Config::GetInt("MSAA"));
 		}
 
 		void Simulation::OnKey(GLFWwindow*, int key, int scancode, int action, int mode)
@@ -318,7 +422,7 @@ namespace WDGS
 				else if (type & Body::Star)
 				{
 					model = StarModel::Create();
-					lightSource = model->object.get();
+					lightSource = (Star*)model->object.get();
 				}
 
 				model->Load(is);

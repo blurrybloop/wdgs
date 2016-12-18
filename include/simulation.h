@@ -34,8 +34,12 @@ namespace WDGS
 
 		Camera::Ptr camera;
 		GLint focusIndex;
-		Object* lightSource;
+		Star* lightSource;
 		double prevX, prevY;
+		
+		int fboW, fboH;
+		GLuint fboHdr, fboMs, rboDepthMs;
+		Graphics::Quad::Ptr screen;
 
 		GLuint ubo;
 		Environment::Ptr env;
@@ -84,6 +88,8 @@ namespace WDGS
 		void OnMouseButton(GLFWwindow*, int button, int action, int mods);
 		void OnMouseMove(GLFWwindow*, double x, double y);
 		void OnMouseWheel(GLFWwindow*, double xoffset, double yoffset);
+
+		void CreateSceenBuffers(int w, int h, int samples);
 
 		virtual void Save(std::ostream& fs);
 		virtual void Load(std::istream& fs);

@@ -52,7 +52,7 @@ namespace WDGS
 		{
 			double adt, h = 0;
 
-			currentStep = glm::min(currentStep, step);
+			currentStep = step;
 
 			do
 			{
@@ -158,8 +158,9 @@ namespace WDGS
 
 			bool exit = false;
 			double error;
+			int mi = 100;
 
-			while (true) {
+			while (--mi) {
 				adt = dt;
 
 				RK4Step(in, buf2, dt / 2);

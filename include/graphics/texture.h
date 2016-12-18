@@ -13,6 +13,19 @@ namespace WDGS
 			DECLARE_MEMMNG(Texture)
 
 		public:
+
+			static Ptr Create(GLenum target)
+			{
+				Ptr ptr = Create();
+
+				ptr->target = target;
+
+				glGenTextures(1, &ptr->id);
+				glBindTexture(ptr->target, ptr->id);
+
+				return ptr;
+			}
+
 			static Ptr Create(const GLchar* path)
 			{
 				Ptr ptr = Create();

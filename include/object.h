@@ -128,9 +128,24 @@ namespace WDGS
 		DECLARE_MEMMNG(Star)
 
 	public:
+
+		double luminosity;
+
 		Star() : SphericObject()
 		{
 			type |= ObjectType::Star;
+		}
+
+		virtual void Save(std::ostream& os)
+		{
+			SphericObject::Save(os);
+			os.write((char*)&luminosity, sizeof(luminosity));
+		}
+
+		virtual void Load(std::istream& is)
+		{
+			SphericObject::Load(is);
+			is.read((char*)&luminosity, sizeof(luminosity));
 		}
 	};
 }

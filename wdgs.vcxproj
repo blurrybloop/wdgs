@@ -59,6 +59,8 @@
   <ItemGroup>
     <None Include="res\shaders\environment.fs.glsl" />
     <None Include="res\shaders\environment.vs.glsl" />
+    <None Include="res\shaders\hdr.fs.glsl" />
+    <None Include="res\shaders\hdr.vs.glsl" />
     <None Include="res\shaders\rocky.fs.glsl" />
     <None Include="res\shaders\rocky.vs.glsl" />
     <None Include="res\shaders\rocky_athmo.fs.glsl" />

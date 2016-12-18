@@ -76,6 +76,13 @@ namespace WDGS
 		static void TW_CALL SetMSAA(const void * value, void * pthis)
 		{
 			Config::SetInt("MSAA", *(int*)value);
+
+			if (sim)
+			{
+				int w, h;
+				glfwGetWindowSize(window, &w, &h);
+				sim->CreateSceenBuffers(w, h, Config::GetInt("MSAA"));
+			}
 		}
 
 		static void TW_CALL GetMSAA(void * value, void * pthis)

@@ -204,6 +204,7 @@ namespace WDGS
 
 		virtual void LoadObject(const GLchar* name)
 		{
+			Body::LoadObject(name);
 			SphericObject* so = (SphericObject*)object.get();
 			so->radius = Resources::GetModelDouble(name, this->type, "radius");
 		}
@@ -378,6 +379,21 @@ namespace WDGS
 
 	protected:
 
+		virtual void LoadUIBar()
+		{
+			SphericBody::LoadUIBar();
+			WDGS::Star* s = (WDGS::Star*)object.get();
+
+			bar->AddRWVariable("luminosity", TW_TYPE_DOUBLE, "Ñâåòèìîñòü (Âò)", &s->luminosity);
+		}
+
+		virtual void LoadObject(const GLchar* name)
+		{
+			SphericBody::LoadObject(name);
+			WDGS::Star* s = (WDGS::Star*)object.get();
+			s->luminosity = Resources::GetModelDouble(name, this->type, "luminosity");
+		}
+
 		virtual void LoadBody(const GLchar* name, bool withObject)
 		{
 			SphericBody::LoadBody(name, withObject);
@@ -420,6 +436,9 @@ namespace WDGS
 			static GLuint modelLoc = glGetUniformLocation(*renderProg, "model");
 			static GLuint mvpLoc = glGetUniformLocation(*renderProg, "mvp");
 
+			static GLuint camLoc2 = glGetUniformBlockIndex(*renderProg, "Camera");
+			static GLuint lightPos2 = glGetUniformBlockIndex(*renderProg, "LightSource");
+
 			WDGS::Star* star = (WDGS::Star*)object.get();
 
 			glm::dmat4 model;
@@ -430,6 +449,9 @@ namespace WDGS
 			renderProg->Use();
 			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4(model)));
 			glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, glm::value_ptr(mvp));
+
+			glUniformBlockBinding(*renderProg, lightPos2, 0);
+			glUniformBlockBinding(*renderProg, camLoc2, 1);
 
 			meshes[0]->Render();
 

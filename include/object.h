@@ -76,10 +76,12 @@ namespace WDGS
 			//is >> rotPeriod >> rotAngle;
 		}
 
+		virtual ~Object() {}
+
 	protected:
 		Object()
 		{
-			type = ObjectType::General;
+			type = Object::General;
 			rotAngle = 0.0;
 		}
 	};
@@ -94,28 +96,19 @@ namespace WDGS
 
 		SphericObject() : Object()
 		{
-			type |= ObjectType::Spheric;
+			type |= Object::Spheric;
 		}
 
 		virtual void Save(std::ostream& os)
 		{
 			Object::Save(os);
-			int p = os.tellp();
-			double huy = 2439711.1;
-			char* a = (char*)&huy;
-
 			os.write((char*)&radius, sizeof(radius));
-			int p2 = os.tellp();
-			//os << radius;
 		}
 
 		virtual void Load(std::istream& is)
 		{
 			Object::Load(is);
-			int p = is.tellg();
 			is.read((char*)&radius, sizeof(radius));
-			int p2 = is.tellg();
-			//is >> radius;
 		}
 	};
 
@@ -126,7 +119,7 @@ namespace WDGS
 
 		Planet() : SphericObject()
 		{
-			type |= ObjectType::Planet;
+			type |= Object::Planet;
 		}
 	};
 
@@ -140,7 +133,7 @@ namespace WDGS
 
 		Star() : SphericObject()
 		{
-			type |= ObjectType::Star;
+			type |= Object::Star;
 		}
 
 		virtual void Save(std::ostream& os)

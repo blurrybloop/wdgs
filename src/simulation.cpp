@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "application.h"
 #include "simulation.h"
 #include "simhelpers.h"
 #include "config.h"
@@ -7,12 +8,13 @@
 
 namespace WDGS
 {
-	Simulation::Ptr Simulation::CreateFromResource(const char* name)
+	Simulation::Ptr Simulation::CreateFromResource(GLint res)
 	{
 		Ptr p = Create();
 
+		p->resId = res;
 		std::ifstream fs;
-		std::string path = Resources::GetSimPath() + Resources::GetSimString(name, "path");
+		std::string path = Resources::GetSimPath() + Resources::GetSimString(res, "path");
 
 		fs.open(path, std::ios::binary);
 		p->Load(fs);
@@ -76,6 +78,18 @@ namespace WDGS
 			combo->AddItem(envIds[i], Resources::GetEnvString(envIds[i], "name_ru"));
 
 		bar->AddComboBox(combo, SetEnvironment, GetEnvironment, this);
+
+
+		combo = ComboBox::Create("Simulation");
+		combo->SetLabel("Симуляция");
+
+		std::vector<GLint> simIds;
+		Resources::GetSimIds(simIds);
+
+		for (size_t i = 0; i < simIds.size(); ++i)
+			combo->AddItem(simIds[i], Resources::GetSimString(simIds[i], "name_ru"));
+
+		bar->AddComboBox(combo, Application::SetSim, Application::GetSim, this);
 
 		glGenBuffers(1, &ubo);
 
@@ -154,6 +168,51 @@ namespace WDGS
 		focusIndex = 1;
 
 		lightSource = (Star*)sun->object.get();*/
+
+
+
+		//StarModel::Ptr sun = StarModel::Create("Sun", true);
+
+		//sun->object->worldPosition = glm::dvec3(0.0, 0.0, 0.0);
+		//sun->object->worldVelocity = glm::dvec3(0.0, 0.0, 0.0);
+
+		//RockyBody::Ptr earth = RockyBody::Create("Earth", true);
+
+		//earth->object->worldPosition = glm::dvec3(0.0, 0.0, 149598261000.0);
+		//earth->object->worldVelocity = glm::dvec3(0.0, 0.0, 0.0);
+
+
+		//earth->object->worldVelocity.x = glm::sqrt(glm::abs(Physics::GravityController::gravityConst * sun->object->mass / earth->object->worldPosition.z));
+		//if (earth->object->worldPosition.z < 0.0)
+		//earth->object->worldVelocity.x = -earth->object->worldVelocity.x;
+
+
+		//RockyBody::Ptr moon = RockyBody::Create("Moon", true);
+
+		//moon->object->worldPosition = glm::dvec3(0.0, 0.0, 149598261000.0 + 384399000);
+		//moon->object->worldVelocity = glm::dvec3(0.0, 0.0, 0.0);
+
+
+		//moon->object->worldVelocity.x = earth->object->worldVelocity.x +glm::sqrt(glm::abs(Physics::GravityController::gravityConst * earth->object->mass / 384399000));
+		//if (moon->object->worldPosition.z < 0.0)
+		//	moon->object->worldVelocity.x = -moon->object->worldVelocity.x;
+
+		//
+		//Body::Ptr model = sun;
+
+		//AddModel(model);
+		//model = earth;
+		//AddModel(model);
+		//model = moon;
+		//AddModel(model);
+
+		//double r = std::static_pointer_cast<SphericObject>(model->object)->radius;
+
+		//camera->FocusOn(model->object, r + 30000000.0, 1.2 * r);
+		//focusIndex = 2;
+
+		//lightSource = (Star*)sun->object.get();
+
 	}
 
 	Simulation::~Simulation()
@@ -223,7 +282,7 @@ namespace WDGS
 
 			glEnable(GL_MULTISAMPLE);
 			glEnable(GL_DEPTH_TEST);
-			glDisable(GL_CULL_FACE);
+			glEnable(GL_CULL_FACE);
 			glDisable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 

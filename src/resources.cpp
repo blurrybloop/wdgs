@@ -102,7 +102,6 @@ namespace WDGS
 				v.push_back(atoi(n.c_str()));
 			}
 		}
-
 	}
 
 	const char* Resources::GetEnvString(GLint envId, const char* propName)
@@ -133,10 +132,36 @@ namespace WDGS
 		return ini.GetVec3(s.c_str(), propName);
 	}
 
-	std::string Resources::GetSimString(const char* simName, const char* propName)
+
+	void Resources::GetSimIds(std::vector<GLint>& v)
 	{
-		std::string s = "Simulation.";
-		s += simName;
+		auto m = ini.GetMap();
+		const char* str = "Simulation.";
+		int len = strlen(str);
+		std::string n;
+
+		for (auto it = m.begin(); it != m.end(); ++it)
+		{
+			if (!it->first.compare(0, len, str))
+			{
+				n = it->first.substr(len);
+				v.push_back(atoi(n.c_str()));
+			}
+		}
+	}
+
+	void Resources::GetSimSection(GLint sim, std::string& out)
+	{
+		char ch[15];
+		sprintf(ch, "%d", sim);
+		out = "Simulation.";
+		out += ch;
+	}
+
+	const char* Resources::GetSimString(GLint sim, const char* propName)
+	{
+		std::string s;
+		GetSimSection(sim, s);
 		return ini.GetString(s.c_str(), propName);
 	}
 

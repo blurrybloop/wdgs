@@ -5,6 +5,9 @@
 #include "graphics/program.h"
 #include "graphics/texture.h"
 
+#define SPHERE_MAX_DETALIZATION 6
+
+
 namespace WDGS
 {
 	namespace Graphics
@@ -297,10 +300,12 @@ namespace WDGS
 			DECLARE_MEMMNG(Sphere)
 
 		protected:
-			static GLuint vao;
+			/*static*/ GLuint vao;
 			static GLuint vbo;
 			static GLuint instances;
 			static GLsizei count;
+
+			int maxlevel;
 
 			struct vertex
 			{
@@ -323,30 +328,42 @@ namespace WDGS
 
 			Sphere() : MeshBase()
 			{
-				static vertex xplus{ { 1.0f, 0.0f, 0.0f } };		/*  X */
-				static vertex xminus{ { -1.0f, 0.0f, 0.0f } };	/* -X */
-				static vertex yplus{ { 0.0f, 1.0f, 0.0f } };		/*  Y */
-				static vertex yminus{ { 0.0f, -1.0f, 0.0f } };	/* -Y */
-				static vertex zplus{ { 0.0f, 0.0f, 1.0f } };		/*  Z */
-				static vertex zminus{ { 0.0f, 0.0f, -1.0f } };	/* -Z */
 
-				static triangle octahedron[] = {
-					{ { xplus, zplus, yplus } },
-					{ { yplus, zplus, xminus } },
-					{ { xminus , zplus, yminus } },
-					{ { yminus , zplus, xplus } },
-					{ { xplus, yplus, zminus } },
-					{ { yplus, xminus , zminus } },
-					{ { xminus , yminus , zminus } },
-					{ { yminus , xplus, zminus } }
-				};
+				glGenVertexArrays(1, &vao);
+				glBindVertexArray(vao);
+
+
+				maxlevel = SPHERE_MAX_DETALIZATION;
 
 				if (instances == 0)
 				{
-					glGenVertexArrays(1, &Sphere::vao);
+					vertex xplus;
+					xplus.position = glm::vec3(1.0f, 0.0f, 0.0f);		/*  X */
+					vertex xminus;
+					xminus.position = glm::vec3(-1.0f, 0.0f, 0.0f);		/*  X */
+					vertex yplus;
+					yplus.position = glm::vec3(0.0f, 1.0f, 0.0f);		/*  X */
+					vertex yminus;
+					yminus.position = glm::vec3(0.0f, -1.0f, 0.0f);		/*  X */
+					vertex zplus;
+					zplus.position = glm::vec3(0.0f, 0.0f, 1.0f);		/*  X */
+					vertex zminus;
+					zminus.position = glm::vec3(0.0f, 0.0f, -1.0f);		/*  X */
+
+					triangle octahedron[] = {
+						{ { xplus, zplus, yplus } },
+						{ { yplus, zplus, xminus } },
+						{ { xminus , zplus, yminus } },
+						{ { yminus , zplus, xplus } },
+						{ { xplus, yplus, zminus } },
+						{ { yplus, xminus , zminus } },
+						{ { xminus , yminus , zminus } },
+						{ { yminus , xplus, zminus } }
+					};
+
 					glGenBuffers(1, &Sphere::vbo);
 
-					int maxlevel = 5, ccw = 1;
+					int ccw = 1;
 
 					int step = 1;
 					for (int level = 0; level < maxlevel; ++level)
@@ -354,7 +371,7 @@ namespace WDGS
 
 					count = sizeof(octahedron) * step;
 
-					glBindVertexArray(Sphere::vao);
+					//glBindVertexArray(Sphere::vao);
 					glBindBuffer(GL_ARRAY_BUFFER, Sphere::vbo);
 
 					glBufferData(GL_ARRAY_BUFFER, count, 0, GL_STATIC_DRAW);
@@ -401,42 +418,112 @@ namespace WDGS
 							newt += step / 4;
 
 							newt->v[0].position = a;
-							newt->v[1].position = b;
-							newt->v[2].position = c;
+							newt->v[1].position = c;
+							newt->v[2].position = oldt->v[2].position;
 
 							newt += step / 4;
 
 							newt->v[0].position = a;
-							newt->v[1].position = c;
-							newt->v[2].position = oldt->v[2].position;
+							newt->v[1].position = b;
+							newt->v[2].position = c;
 
 						}
 
 						step /= 4;
 					}
 
+					for (int i = 0; i < size; ++i)
+					{
+						if (((vertex*)buf)[i].position == zplus.position || ((vertex*)buf)[i].position == yplus.position
+							|| ((vertex*)buf)[i].position == xplus.position ||
+							((vertex*)buf)[i].position == zminus.position
+							|| ((vertex*)buf)[i].position == yminus.position
+							|| ((vertex*)buf)[i].position == xminus.position)
+							cdbg << i << "\n";
+					}
+
 					glUnmapBuffer(GL_ARRAY_BUFFER);
 
-					glEnableVertexAttribArray(0);
-					glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (GLvoid*)0);
-
-					glBindVertexArray(0);
+					
 				}
+
+				//SetDetalizationLevel(1);
+				glEnableVertexAttribArray(0);
+				glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (GLvoid*)0);
+
+				glBindVertexArray(0);
 
 				++instances;
 			}
 
 		public:
 
-			virtual GLuint GetVAO() { return Sphere::vao; }
-			virtual GLsizei GetCount() { return Sphere::count; }
+			virtual GLuint GetVAO() { return vao; }
+			virtual GLsizei GetCount() 
+			{ 
+				/*GLint cnt = Sphere::count;
+				for (int l = maxlevel; l <= SPHERE_MAX_DETALIZATION; ++l)
+					cnt /=4;*/
+
+				return Sphere::count;
+			}
+
 			virtual GLenum GetMode() { return GL_TRIANGLES; }
+
+			void SetDetalizationLevel(int level)
+			{
+				maxlevel = level;
+
+				int step = 1;
+				for (int l = maxlevel; l < SPHERE_MAX_DETALIZATION; ++l)
+					step *= 4;
+
+				//int first = 0;
+				//int ss = 1;
+				//for (int l = maxlevel; l < SPHERE_MAX_DETALIZATION; ++l)
+				//{
+				//	first = step - 1;
+				//	step /= 4;
+				//	ss *= 4;
+				//}
+
+				//int first;
+				//int size = GetCount() / sizeof(triangle);
+
+				//int step = 1;
+				//for (int l = 0; l < maxlevel; ++l)
+				//	step *= 4;
+
+				//for (int l = 0; l < maxlevel; ++l)
+				//{
+				//	//for (int i = step - 1, j = 0; i < size; i += step, ++j)
+				//	//{
+				//		first = (step / 4) - 1;
+				//	//}
+				//}
+				/*int step = sizeof(vertex);
+				for (int i = maxlevel; i < SPHERE_MAX_DETALIZATION; ++i)
+					step *= 4;
+
+				int a = (step / sizeof(vertex) - 1) * sizeof(vertex);*/
+			
+			// GL_MAX_VERTEX_ATTRIB_STRIDE
+				//GLint d;
+				//glGetIntegerv(GL_MAX_VERTEX_ATTRIB_STRIDE,
+				//	&d);
+
+				//glEnableVertexAttribArray(0);
+				//glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 4000, (GLvoid*)(0));
+
+			}
 
 			virtual ~Sphere()
 			{
+				glDeleteVertexArrays(1, &vao);
+
 				if (instances == 1)
 				{
-					glDeleteVertexArrays(1, &Sphere::vao);
+					//glDeleteVertexArrays(1, &Sphere::vao);
 					glDeleteBuffers(1, &Sphere::vbo);
 				}
 

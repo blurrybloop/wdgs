@@ -147,7 +147,7 @@ namespace WDGS
 			glm::dquat q = glm::dquat(object->axisInclination);
 			glm::dvec3 axis = q * glm::dvec3(0.0, 1.0, 0.0);
 
-			glm::dmat4 rot = (glm::dmat4)glm::angleAxis(object->rotAngle, axis);
+			glm::dmat4 rot = glm::mat4_cast(glm::angleAxis(object->rotAngle, axis));
 			mat = glm::translate(glm::dmat4(1.0), object->worldPosition) * rot;
 
 		}
@@ -177,6 +177,7 @@ namespace WDGS
 		}
 
 		virtual void Render(Camera::Ptr& cam, Light& light) = 0;
+		virtual ~Body() {}
 	};
 
 	class SphericBody : public Body
@@ -192,6 +193,27 @@ namespace WDGS
 		{
 			Body::GetModelMatrix(mat);
 			mat = glm::scale(mat, glm::dvec3(((SphericObject*)object.get())->radius));
+		}
+
+		bool IsVisible(Camera::Ptr& cam, glm::dmat4& model)
+		{
+			SphericObject* s = (SphericObject*)object.get();
+
+			glm::mat4 mvp = glm::mat4(cam->GetTransform() * model);
+
+			glm::vec4 p = mvp * glm::vec4(0.0, 0.0, 0.0, 1.0);
+			glm::vec4 p2 = cam->GetLookat() * model * glm::vec4(0.0, 0.0, 0.0, 1.0);
+
+			p2.x += s->radius;
+			p2 = cam->GetProjection() * p2;
+
+			p = p / p.w;
+			p2 = p2 / p2.w;
+
+			if (glm::distance(p.x, p2.x) < 1E-3)
+				return false;
+
+			return true;
 		}
 
 		virtual void LoadUIBar()
@@ -290,7 +312,7 @@ namespace WDGS
 
 		RockyBody() : SphericBody()
 		{
-			type |= BodyType::Rocky;
+			type |= Body::Rocky;
 			object = Planet::Create();
 		}
 
@@ -319,6 +341,15 @@ namespace WDGS
 
 		virtual void Render(Camera::Ptr& cam, Light& light)
 		{
+			Planet* planet = (Planet*)object.get();
+
+			glm::dmat4 model;
+			GetModelMatrix(model);
+
+			glm::mat4 mvp = glm::mat4(cam->GetTransform() * model);
+
+			if (!IsVisible(cam, model)) return;
+
 			Program::Ptr& renderProg1 = meshes[0]->GetProgram();
 		
 			static GLuint modelLoc = glGetUniformLocation(*renderProg1, "model");
@@ -326,13 +357,6 @@ namespace WDGS
 			static GLuint camLoc = glGetUniformBlockIndex(*renderProg1, "Camera");
 			static GLuint lightPos = glGetUniformBlockIndex(*renderProg1, "LightSource");
 
-
-			Planet* planet = (Planet*)object.get();
-
-			glm::dmat4 model;
-			GetModelMatrix(model);
-
-			glm::mat4 mvp = glm::mat4(cam->GetTransform() * model);
 
 			renderProg1->Use();
 			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4(model)));
@@ -348,6 +372,15 @@ namespace WDGS
 		{
 			if (athmoColor.a == 0.0) return;
 
+
+			glm::dmat4 model;
+			GetModelMatrix(model);
+			model = glm::scale(model, glm::dvec3(1.05, 1.05, 1.05));
+
+			glm::mat4 mvp = glm::mat4(cam->GetTransform() * model);
+
+			if (!IsVisible(cam, model)) return;
+
 			Program::Ptr& renderProg = meshes[1]->GetProgram();
 
 			static GLuint modelLoc2 = glGetUniformLocation(*renderProg, "model");
@@ -357,11 +390,6 @@ namespace WDGS
 			static GLuint lightPos2 = glGetUniformBlockIndex(*renderProg, "LightSource");
 			static GLuint athmoLoc = glGetUniformLocation(*renderProg, "athmoColor");
 
-			glm::dmat4 model;
-			GetModelMatrix(model);
-			model = glm::scale(model, glm::dvec3(1.05, 1.05, 1.05));
-
-			glm::mat4 mvp = glm::mat4(cam->GetTransform() * model);
 
 			renderProg->Use();
 			glUniformMatrix4fv(modelLoc2, 1, GL_FALSE, glm::value_ptr(glm::mat4(model)));
@@ -445,7 +473,7 @@ namespace WDGS
 
 		StarModel() : SphericBody()
 		{
-			type |= BodyType::Star;
+			type |= Body::Star;
 			object = Star::Create();
 		}
 
@@ -453,6 +481,15 @@ namespace WDGS
 
 		virtual void Render(Camera::Ptr& cam, Light& light)
 		{
+
+			glm::dmat4 model;
+			GetModelMatrix(model);
+
+			glm::mat4 mvp = glm::mat4(cam->GetTransform() * model);
+
+
+			if (!IsVisible(cam, model)) return;
+
 			Program::Ptr& renderProg = meshes[0]->GetProgram();
 
 			static GLuint modelLoc = glGetUniformLocation(*renderProg, "model");
@@ -462,11 +499,6 @@ namespace WDGS
 			static GLuint lightPos2 = glGetUniformBlockIndex(*renderProg, "LightSource");
 
 			WDGS::Star* star = (WDGS::Star*)object.get();
-
-			glm::dmat4 model;
-			GetModelMatrix(model);
-
-			glm::mat4 mvp = glm::mat4(cam->GetTransform() * model);
 
 			renderProg->Use();
 			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(glm::mat4(model)));

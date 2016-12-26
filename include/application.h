@@ -25,7 +25,7 @@ namespace WDGS
 		static UI::Ptr ui;
 		static Bar::Ptr bar;
 
-		static void OnError(const char* message);
+		static void OnError(int error, const char* message);
 		static void OnRender(double time);
 		static int OnStartup();
 		static int OnShutdown();
@@ -102,6 +102,21 @@ namespace WDGS
 		}
 
 	public:
+
+		static void TW_CALL SetSim(const void * value, void * pthis)
+		{
+			sim = 0;
+			sim = Simulation::CreateFromResource(*(int*)value);
+
+			int w, h;
+			glfwGetWindowSize(window, &w, &h);
+			OnResize(window, w, h);
+		}
+
+		static void TW_CALL GetSim(void * value, void * pthis)
+		{
+			*(int*)value = sim->resId;
+		}
 		
 		static int Run(int argc, const char** argv);
 	};

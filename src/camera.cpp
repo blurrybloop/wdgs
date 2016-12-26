@@ -24,7 +24,7 @@ namespace WDGS
 
 		position = 
 			glm::translate(glm::dmat4(1.0), focusedOn->worldPosition) * 
-			(glm::dmat4)q * 
+			glm::mat4_cast(q)  * 
 			glm::dvec4(0.0, 0.0, distanceToFocus, 1.0);
 
 		lookat = glm::lookAt(position, focusedOn->worldPosition, up);

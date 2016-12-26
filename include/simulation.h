@@ -19,7 +19,8 @@ namespace WDGS
 	{
 		DECLARE_MEMMNG(Simulation)
 
-		static Ptr CreateFromResource(const char* name);
+		static Ptr CreateFromResource(GLint res);
+		GLint resId;
 
 	protected:
 

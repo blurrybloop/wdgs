@@ -40,11 +40,11 @@ namespace WDGS
 		bar->AddComboBox(combo, SetMSAA, GetMSAA, 0);
 		bar->AddCBVariable("VSync", TW_TYPE_BOOL32, "Вертикальная синхронизация", SetVSync, GetVSync, 0);
 
-		sim = Simulation::CreateFromResource("0");
+		sim = Simulation::CreateFromResource(0);
 		//sim = Simulation::Create();
 
 		//sim->SetTimestep(24 * 60.0 * 60.0);
-
+		//sim->SetTimestep(60.0 * 60.0);
 		return 1;
 	}
 
@@ -101,7 +101,7 @@ namespace WDGS
 		ui->OnChar(ch);
 	}
 
-	void Application::OnError(const char* message)
+	void Application::OnError(int error, const char* message)
 	{
 		#ifdef WIN32
 			MessageBoxA(0, message, "Error", MB_ICONEXCLAMATION);
@@ -114,9 +114,12 @@ namespace WDGS
 		//инициализация GLFW
 		if (!glfwInit())
 		{
-			OnError("Failed to initialize GLFW\n");
+			OnError(0, "Failed to initialize GLFW\n");
+			glfwTerminate();
 			return 0;
 		}
+
+		glfwSetErrorCallback(OnError);
 
 		#ifdef _DEBUG
 			//дополнительная информация для отладки
@@ -159,8 +162,7 @@ namespace WDGS
 
 		if (!window)
 		{
-			OnError("Failed to open window\n");
-			TwTerminate();
+			glfwTerminate();
 			return 0;
 		}
 
@@ -182,7 +184,8 @@ namespace WDGS
 			err += (const char*)glewGetErrorString(r);
 			err += "\n";
 
-			OnError(err.c_str());
+			OnError(0, err.c_str());
+			glfwTerminate();
 			return 0;
 		}
 
@@ -192,7 +195,8 @@ namespace WDGS
 		if (!glewIsSupported(vs))
 		{
 			sprintf(vs, "OpenGL %d.%d or greater is required.", WDGS_GL_MAJOR_VERSION, WDGS_GL_MINOR_VERSION);
-			OnError(vs);
+			OnError(0, vs);
+			glfwTerminate();
 			return 0;
 		}
 
@@ -224,10 +228,10 @@ namespace WDGS
 			glfwShowWindow(window);
 			OnResize(window, w, h);
 
-			/*std::ofstream os;
-			os.open("res/simulations/solar.sim", std::ios::binary);
-			sim->Save(os);
-			os.close();*/
+			//std::ofstream os;
+			//os.open("res/simulations/sun_earth_moon.sim", std::ios::binary);
+			//sim->Save(os);
+			//os.close();
 
 			//std::ofstream fs;
 			//fs.open("res/simulations/solar.sim", std::ios::binary);
@@ -248,7 +252,7 @@ namespace WDGS
 			} while (running);
 		}
 		else
-			OnError("Failed to initialize application.\nSee log for details.");
+			OnError(0, "Failed to initialize application.\nSee log for details.");
 
 		OnShutdown();
 

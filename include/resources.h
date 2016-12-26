@@ -11,6 +11,7 @@ namespace WDGS
 
 		static void GetModelSection(const char* modelName, int type, std::string& out);
 		static void GetEnvSection(GLint envId, std::string& out);
+		static void GetSimSection(GLint sim, std::string& out);
 
 	public:
 		static std::string GetShaderPath();
@@ -30,7 +31,8 @@ namespace WDGS
 		static int GetEnvInt(GLint envId, const char* propName);
 		static glm::dvec3 GetEnvVec3(GLint envId, const char* propName);
 
-		static std::string GetSimString(const char* simName, const char* propName);
+		static void GetSimIds(std::vector<GLint>& v);
+		static const char* GetSimString(GLint sim, const char* propName);
 
 	};
 }

@@ -197,6 +197,11 @@ namespace WDGS
 			TwSetParam(bar, NULL, "iconified", TW_PARAM_INT32, 1, &val);
 		}
 
+		~Bar()
+		{
+			TwDeleteBar(bar);
+		}
+
 	};
 
 	class BarOwner

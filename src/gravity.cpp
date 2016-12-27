@@ -48,15 +48,20 @@ namespace WDGS
 
 		}
 
-		void GravityController::Refresh(double step)
+		void GravityController::Refresh(double step, double timestep)
 		{
 			double adt, h = 0;
 
-			currentStep = step;
+			if (prevTimestep != timestep)
+				currentStep = step;
+			else
+				currentStep = glm::min(currentStep, step);
 
+			prevTimestep = timestep;
+			
 			do
 			{
-				double fd = RK4AdaptiveStep(buf0, buf0, currentStep, adt, 1E-1);
+				double fd = RK4AdaptiveStep(buf0, buf0, currentStep, adt, 1.0);
 				h += adt;
 				currentStep = glm::min(step, fd);
 			} while (h + currentStep < step);
@@ -158,9 +163,8 @@ namespace WDGS
 
 			bool exit = false;
 			double error;
-			int mi = 100;
 
-			while (--mi) {
+			while (1) {
 				adt = dt;
 
 				RK4Step(in, buf2, dt / 2);

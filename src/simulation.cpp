@@ -259,7 +259,7 @@ namespace WDGS
 		{
 			double step = (time - prevTime) * timestep;
 
-			gc->Refresh(step);
+			gc->Refresh(step, timestep);
 
 			for (auto it = models.begin(); it != models.end(); ++it)
 			{
@@ -411,7 +411,7 @@ namespace WDGS
 		void Simulation::OnResize(GLFWwindow*, int w, int h)
 		{
 			camera->aspect = (double)w / h;
-			camera->fov = 45.0;
+			camera->fov = glm::radians(40.0);
 
 			CreateSceenBuffers(w, h, Config::GetInt("MSAA"));
 		}

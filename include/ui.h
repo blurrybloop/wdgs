@@ -172,10 +172,15 @@ namespace WDGS
 			TwSetParam(bar, name, "label", TW_PARAM_CSTRING, 1, label);
 
 			if (group)
+			{
 				TwSetParam(bar, name, "group", TW_PARAM_CSTRING, 1, group);
+			}
 
-			int shv = 1;
-			TwSetParam(bar, name, "opened", TW_PARAM_INT32, 1, &shv);
+			if (type == TW_TYPE_QUAT4D)
+			{
+				int shv = 1;
+				TwSetParam(bar, name, "opened", TW_PARAM_INT32, 1, &shv);
+			}
 
 		}
 

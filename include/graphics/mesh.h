@@ -432,16 +432,6 @@ namespace WDGS
 						step /= 4;
 					}
 
-					for (int i = 0; i < size; ++i)
-					{
-						if (((vertex*)buf)[i].position == zplus.position || ((vertex*)buf)[i].position == yplus.position
-							|| ((vertex*)buf)[i].position == xplus.position ||
-							((vertex*)buf)[i].position == zminus.position
-							|| ((vertex*)buf)[i].position == yminus.position
-							|| ((vertex*)buf)[i].position == xminus.position)
-							cdbg << i << "\n";
-					}
-
 					glUnmapBuffer(GL_ARRAY_BUFFER);
 
 					

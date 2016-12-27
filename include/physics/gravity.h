@@ -27,14 +27,16 @@ namespace WDGS
 			void RemoveMP(MaterialPoint* mp);
 
 
-			void Refresh(double step);
+			void Refresh(double step, double timestep);
 
 		protected:
 			double currentStep;
+			double prevTimestep;
 
 			GravityController()
 			{
 				currentStep = DBL_MAX;
+				prevTimestep = 0.0;
 			}
 
 			//Вектор производных для закона всемирного притяжения

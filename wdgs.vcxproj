@@ -57,16 +57,16 @@
     <ClInclude Include="include\ui.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="res\shaders\environment.fs.glsl" />
-    <None Include="res\shaders\environment.vs.glsl" />
-    <None Include="res\shaders\hdr.fs.glsl" />
-    <None Include="res\shaders\hdr.vs.glsl" />
-    <None Include="res\shaders\rocky.fs.glsl" />
-    <None Include="res\shaders\rocky.vs.glsl" />
-    <None Include="res\shaders\rocky_athmo.fs.glsl" />
-    <None Include="res\shaders\rocky_athmo.vs.glsl" />
-    <None Include="res\shaders\star.fs.glsl" />
-    <None Include="res\shaders\star.vs.glsl" />
+    <None Include="bin\res\shaders\environment.fs.glsl" />
+    <None Include="bin\res\shaders\environment.vs.glsl" />
+    <None Include="bin\res\shaders\hdr.fs.glsl" />
+    <None Include="bin\res\shaders\hdr.vs.glsl" />
+    <None Include="bin\res\shaders\rocky.fs.glsl" />
+    <None Include="bin\res\shaders\rocky.vs.glsl" />
+    <None Include="bin\res\shaders\rocky_athmo.fs.glsl" />
+    <None Include="bin\res\shaders\rocky_athmo.vs.glsl" />
+    <None Include="bin\res\shaders\star.fs.glsl" />
+    <None Include="bin\res\shaders\star.vs.glsl" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{FC96C3E3-6834-47D1-90CE-9A6549F55A03}</ProjectGuid>

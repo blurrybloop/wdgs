@@ -195,7 +195,7 @@ namespace WDGS
 			mat = glm::scale(mat, glm::dvec3(((SphericObject*)object.get())->radius));
 		}
 
-		bool IsVisible(Camera::Ptr& cam, glm::dmat4& model)
+		bool IsVisible(Camera::Ptr& cam, glm::dmat4& model, glm::mat4& mv)
 		{
 			SphericObject* s = (SphericObject*)object.get();
 
@@ -210,7 +210,7 @@ namespace WDGS
 			p = p / p.w;
 			p2 = p2 / p2.w;
 
-			if (glm::distance(p.x, p2.x) < 1E-3)
+			if ((p.x - p2.x) * (p.x - p2.x) + (p.y - p2.y) * (p.y - p2.y) < 1E-6)
 				return false;
 
 			return true;
@@ -348,7 +348,7 @@ namespace WDGS
 
 			glm::mat4 mvp = glm::mat4(cam->GetTransform() * model);
 
-			if (!IsVisible(cam, model)) return;
+			if (!IsVisible(cam, model, mvp)) return;
 
 			Program::Ptr& renderProg1 = meshes[0]->GetProgram();
 		
@@ -379,7 +379,7 @@ namespace WDGS
 
 			glm::mat4 mvp = glm::mat4(cam->GetTransform() * model);
 
-			if (!IsVisible(cam, model)) return;
+			if (!IsVisible(cam, model, mvp)) return;
 
 			Program::Ptr& renderProg = meshes[1]->GetProgram();
 
@@ -488,7 +488,7 @@ namespace WDGS
 			glm::mat4 mvp = glm::mat4(cam->GetTransform() * model);
 
 
-			if (!IsVisible(cam, model)) return;
+			if (!IsVisible(cam, model, mvp)) return;
 
 			Program::Ptr& renderProg = meshes[0]->GetProgram();
 

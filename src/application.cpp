@@ -50,6 +50,9 @@ namespace WDGS
 
 	int Application::OnShutdown()
 	{
+		sim = 0;
+		bar = 0;
+
 		return 1;
 	}
 
@@ -67,8 +70,7 @@ namespace WDGS
 		{
 			glViewport(0, 0, w, h);
 			ui->OnResize(w, h);
-			sim->OnResize(wnd, w, h);
-			
+			sim->OnResize(wnd, w, h);		
 		}
 	}
 

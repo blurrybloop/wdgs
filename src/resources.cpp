@@ -38,6 +38,9 @@ namespace WDGS
 		case Body::Star:
 			out += ".Star";
 			break;
+
+		default:
+            break;
 		}
 
 		out += '.';
@@ -94,11 +97,11 @@ namespace WDGS
 		int len = strlen(str);
 		std::string n;
 		
-		for (auto it = m.begin(); it != m.end(); ++it)
+		for (auto & it : m)
 		{
-			if (!it->first.compare(0, len, str))
+			if (!it.first.compare(0, len, str))
 			{
-				n = it->first.substr(len);
+				n = it.first.substr(len);
 				v.push_back(atoi(n.c_str()));
 			}
 		}
@@ -140,11 +143,11 @@ namespace WDGS
 		int len = strlen(str);
 		std::string n;
 
-		for (auto it = m.begin(); it != m.end(); ++it)
+		for (auto & it : m)
 		{
-			if (!it->first.compare(0, len, str))
+			if (!it.first.compare(0, len, str))
 			{
-				n = it->first.substr(len);
+				n = it.first.substr(len);
 				v.push_back(atoi(n.c_str()));
 			}
 		}

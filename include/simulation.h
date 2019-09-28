@@ -39,7 +39,7 @@ namespace WDGS
 		double prevX, prevY;
 		
 		int fboW, fboH;
-		GLuint fboHdr, fboMs, rboDepthMs;
+		GLuint fboHdr, fboMs, rboDepthMs, rboDepth;
 		Graphics::Quad::Ptr screen;
 
 		GLuint ubo;

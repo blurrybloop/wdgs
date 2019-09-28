@@ -31,7 +31,7 @@ namespace WDGS
 				fs.open(path);
 				std::string from = "";
 			
-				while (1)
+				while (fs.good())
 				{
 					std::string s;
 					std::getline(fs, s);
@@ -70,7 +70,7 @@ namespace WDGS
 
 		std::map <std::string, std::map<std::string, std::string>>& GetMap() { return mp; }
 
-		const char* GetString(const char* section, const char* key)
+		const char* GetString(const char* section, const char* key, const char* def = "")
 		{
 			auto it = mp.find(section);
 			if (it != mp.end())
@@ -80,19 +80,19 @@ namespace WDGS
 					return it2->second.c_str();
 			}
 
-			return "";
+			return def;
 		}
 
-		double GetDouble(const char* section, const char* key)
+		double GetDouble(const char* section, const char* key, double def = 0.0)
 		{
 			std::string str = GetString(section, key);
-			return atof(str.c_str());
+			return str.empty() ? def : atof(str.c_str());
 		}
 
-		int GetInt(const char* section, const char* key)
+		int GetInt(const char* section, const char* key, int def = 0)
 		{
 			std::string str = GetString(section, key);
-			return atoi(str.c_str());
+			return  str.empty() ? def : atoi(str.c_str());
 		}
 
 		glm::dvec3 GetVec3(const char* section, const char* key)

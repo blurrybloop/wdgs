@@ -10,14 +10,14 @@ namespace WDGS
 		static INI ini;
 
 	public:
-		static std::string GetString(const char* name)
+		static std::string GetString(const char* name, const char* def = "")
 		{
-			return ini.GetString("Application", name);
+			return ini.GetString("Application", name, def);
 		}
 
-		static int GetInt(const char* name)
+		static int GetInt(const char* name, int def = 0)
 		{
-			return ini.GetInt("Application", name);
+			return ini.GetInt("Application", name, def);
 		}
 
 		static void SetInt(const char* name, int val)

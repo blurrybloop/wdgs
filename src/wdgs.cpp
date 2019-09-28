@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "application.h"
-#include "debug.h"
 
 #ifdef WIN32
 
@@ -21,7 +20,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		wlen = wcslen(lpArgv[i]);
 		argv[i] = new char[wlen + 1];
-		WideCharToMultiByte(CP_ACP, 0, lpArgv[i], wlen, argv[i], wlen + 1, 0, NULL);
+		WideCharToMultiByte(CP_ACP, 0, lpArgv[i], wlen, argv[i], wlen + 1, nullptr, nullptr);
 		argv[i][wlen] = 0;
 	}
 	LocalFree(lpArgv);

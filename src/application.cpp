@@ -5,30 +5,30 @@
 namespace WDGS
 {
 	bool Application::running(false);
-	GLFWwindow* Application::window(0);
+	GLFWwindow* Application::window(nullptr);
 
-	Simulation::Ptr Application::sim(0);
-	UI::Ptr Application::ui(0);
-	Bar::Ptr Application::bar(0);
+	Simulation::Ptr Application::sim(nullptr);
+	 UI::Ptr Application::ui(nullptr);
+	 Bar::Ptr Application::bar(nullptr);
 
-	void APIENTRY Application::DebugCallback(GLenum source,
-		GLenum type,
-		GLuint id,
-		GLenum severity,
-		GLsizei length,
+	void APIENTRY Application::DebugCallback(GLenum /* source */,
+		GLenum /* type */,
+		GLuint /* id */,
+		GLenum /* severity */,
+		GLsizei /* length */,
 		const GLchar* message,
-		GLvoid* userParam)
+		GLvoid* /* userParam */)
 	{
 		cdbg << message << "\n";
 	}
 
 	int Application::OnStartup()
 	{
-		ui = UI::Create();
+	    ui = UI::Create();
 
 		bar = Bar::Create("Application");
 		bar->SetLabel("Свойства приложения");
-		bar->AddCBVariable("fullscreen", TW_TYPE_BOOL32, "Полноэкранный режим", SetFullscreen, GetFullscreen, 0);
+		bar->AddCBVariable("fullscreen", TW_TYPE_BOOL32, "Полноэкранный режим", SetFullscreen, GetFullscreen, nullptr);
 		
 		ComboBox::Ptr combo = ComboBox::Create("MSAA");
 		combo->SetLabel("Сглаживание (MSAA)");
@@ -37,8 +37,8 @@ namespace WDGS
 		combo->AddItem(4, "4x");
 		combo->AddItem(8, "8x");
 
-		bar->AddComboBox(combo, SetMSAA, GetMSAA, 0);
-		bar->AddCBVariable("VSync", TW_TYPE_BOOL32, "Вертикальная синхронизация", SetVSync, GetVSync, 0);
+		bar->AddComboBox(combo, SetMSAA, GetMSAA, nullptr);
+		bar->AddCBVariable("VSync", TW_TYPE_BOOL32, "Вертикальная синхронизация", SetVSync, GetVSync, nullptr);
 
 		sim = Simulation::CreateFromResource(0);
 		//sim = Simulation::Create();
@@ -50,8 +50,8 @@ namespace WDGS
 
 	int Application::OnShutdown()
 	{
-		sim = 0;
-		bar = 0;
+		sim = nullptr;
+		bar = nullptr;
 
 		return 1;
 	}
@@ -103,15 +103,15 @@ namespace WDGS
 		ui->OnChar(ch);
 	}
 
-	void Application::OnError(int error, const char* message)
+	void Application::OnError(int /* error */, const char* message)
 	{
 		#ifdef WIN32
-			MessageBoxA(0, message, "Error", MB_ICONEXCLAMATION);
+			MessageBoxA(nullptr, message, "Error", MB_ICONEXCLAMATION);
 		#endif
 	}
 
 
-	int Application::Run(int argc, const char** argv)
+	int Application::Run(int /* argc */, const char** /* argv */)
 	{
 		//инициализация GLFW
 		if (!glfwInit())
@@ -137,11 +137,11 @@ namespace WDGS
 		glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
 		int fullscreen = Config::GetInt("Fullscreen");
-		int w = Config::GetInt("WindowWidth");
-		int h = Config::GetInt("WindowHeight");
+		int w = Config::GetInt("WindowWidth", 1200);
+		int h = Config::GetInt("WindowHeight", 700);
 
 		//полноэкранный режим - установка размеров окна под экран (если не заданы явно)
-		if (fullscreen && (w == 0 || h == 0))
+		if (fullscreen)
 		{
 			const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 			glfwWindowHint(GLFW_RED_BITS, mode->redBits);
@@ -159,8 +159,8 @@ namespace WDGS
 		//создание окна
 		window = glfwCreateWindow(w, h,
 			WDGS_TITLE,
-			fullscreen ? glfwGetPrimaryMonitor() : NULL,
-			NULL);
+			fullscreen ? glfwGetPrimaryMonitor() : nullptr,
+			nullptr);
 
 		if (!window)
 		{
@@ -169,22 +169,19 @@ namespace WDGS
 		}
 
 
-		glfwSetWindowPos(window, Config::GetInt("WindowX"), Config::GetInt("WindowY"));
+		glfwSetWindowPos(window, Config::GetInt("WindowX", 100), Config::GetInt("WindowY", 100));
 
 
 		//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 		glfwMakeContextCurrent(window);
 
-		glewExperimental = GL_TRUE;
+		//glewExperimental = GL_TRUE;
 
-		//инициализация GLEW
-		GLenum r = glewInit();
-		if (r != GLEW_OK)
+		//инициализация GLAD
+		if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 		{
-			std::string err = "Failed to initialize GLEW.\n";
-			err += (const char*)glewGetErrorString(r);
-			err += "\n";
+			std::string err = "Failed to initialize GLAD.\n";
 
 			OnError(0, err.c_str());
 			glfwTerminate();
@@ -194,7 +191,7 @@ namespace WDGS
 		char vs[100];
 		sprintf(vs, "GL_VERSION_%d_%d", WDGS_GL_MAJOR_VERSION, WDGS_GL_MINOR_VERSION);
 
-		if (!glewIsSupported(vs))
+		if (GLVersion.major < WDGS_GL_MAJOR_VERSION || (GLVersion.major == WDGS_GL_MAJOR_VERSION && GLVersion.minor < WDGS_GL_MINOR_VERSION))
 		{
 			sprintf(vs, "OpenGL %d.%d or greater is required.", WDGS_GL_MAJOR_VERSION, WDGS_GL_MINOR_VERSION);
 			OnError(0, vs);
@@ -209,22 +206,17 @@ namespace WDGS
 		glfwSetCursorPosCallback(window, OnMouseMove);
 		glfwSetScrollCallback(window, OnMouseWheel);
 		glfwSetCharCallback(window, OnChar);
-			
-		if (glewIsSupported("GL_VERSION_4_3"))
+
+		if (GLAD_GL_ARB_debug_output)
 		{
-			glDebugMessageCallback((GLDEBUGPROC)DebugCallback, 0);
-			glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-		}
-		else if (GLEW_ARB_debug_output)
-		{
-			glDebugMessageCallbackARB((GLDEBUGPROC)DebugCallback, 0);
+			glDebugMessageCallbackARB((GLDEBUGPROC)DebugCallback, nullptr);
 			glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
 		}
 
-		glfwSwapInterval(Config::GetInt("VSync"));
+		glfwSwapInterval(Config::GetInt("VSync", 1));
 
 		running = true;
-	
+
 		if (OnStartup())
 		{
 			glfwShowWindow(window);
@@ -262,11 +254,12 @@ namespace WDGS
 		glfwGetWindowPos(window, &x, &y);
 		glfwGetWindowSize(window, &w, &h);
 
-		Config::SetInt("WindowX", x);
-		Config::SetInt("WindowY", y);
-
-		if (!Config::GetInt("Fullscreen"))
+		if (!Config::GetInt("Fullscreen", 0))
 		{
+
+			Config::SetInt("WindowX", x);
+			Config::SetInt("WindowY", y);
+
 			Config::SetInt("WindowWidth", w);
 			Config::SetInt("WindowHeight", h);
 		}

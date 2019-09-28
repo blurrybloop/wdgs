@@ -57,13 +57,17 @@ namespace WDGS
 			}
 			else
 				glfwSetWindowMonitor(
-					window, 
-					NULL,
-					Config::GetInt("WindowX"), 
-					Config::GetInt("WindowY"),
-					Config::GetInt("WindowWidth"),
-					Config::GetInt("WindowHeight"),
+					window,
+					nullptr,
+					Config::GetInt("WindowX", 100),
+					Config::GetInt("WindowY", 100),
+					Config::GetInt("WindowWidth", 1200),
+					Config::GetInt("WindowHeight", 700),
 					0);
+
+			int w, h;
+			glfwGetWindowSize(window, &w, &h);
+			OnResize(window, w, h);
 
 			Config::SetInt("Fullscreen", fs);
 		}
@@ -98,14 +102,14 @@ namespace WDGS
 
 		static void TW_CALL GetVSync(void * value, void * pthis)
 		{
-			*(int*)value = Config::GetInt("VSync");
+			*(int*)value = Config::GetInt("VSync", 1);
 		}
 
 	public:
 
 		static void TW_CALL SetSim(const void * value, void * pthis)
 		{
-			sim = 0;
+			sim = nullptr;
 			sim = Simulation::CreateFromResource(*(int*)value);
 
 			int w, h;

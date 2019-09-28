@@ -24,12 +24,12 @@ namespace WDGS
 		std::vector<MeshBase::Ptr> meshes;
 
 	public:
-		enum BodyType
+		enum BodyType : unsigned int
 		{
-			Rocky = 1, GasGiant = 1 << 1, Star = 1 << 2
+			Rocky = 1u, GasGiant = 1u << 1u, Star = 1u << 2u
 		};
 
-		int type;
+		unsigned int type;
 		std::string resName;
 		Object::Ptr object;
 
@@ -78,7 +78,7 @@ namespace WDGS
 		static void TW_CALL SetInclinationCB(const void * value, void * pthis)
 		{
 			glm::dquat q;
-			const double* p = (const double*)value;
+			const auto* p = (const double*)value;
 
 			for (int i = 0; i < 4; ++i)
 				q[i] = p[i];
@@ -90,7 +90,7 @@ namespace WDGS
 		{
 			glm::dquat q = glm::dquat(((Body*)pthis)->object->axisInclination);
 
-			double* p = (double*)value;
+			auto* p = (double*)value;
 
 			for (int i = 0; i < 4; ++i)
 				p[i] = q[i];
@@ -119,7 +119,7 @@ namespace WDGS
 			bar->AddCBVariable("inclination_y", TW_TYPE_DOUBLE, "Y", SetInclinationYCB, GetInclinationYCB, this, "Наклон оси");
 			bar->AddCBVariable("inclination_z", TW_TYPE_DOUBLE, "Z", SetInclinationZCB, GetInclinationZCB, this, "Наклон оси");
 
-			bar->AddRWVariable("rot_period", TW_TYPE_DOUBLE, "Период вращения", &object->rotPeriod);			
+			bar->AddRWVariable("rot_period", TW_TYPE_DOUBLE, "Период вращения", &object->rotPeriod);
 		}
 
 		virtual void LoadObject(const GLchar* name)
@@ -165,7 +165,7 @@ namespace WDGS
 
 		virtual void Load(std::istream& is)
 		{
-			size_t len;
+			int len;
 			is.read((char*)&len, sizeof(len));
 			resName.resize(len);
 			is.read((char*)resName.c_str(), len);

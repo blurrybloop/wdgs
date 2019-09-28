@@ -33,7 +33,7 @@ namespace WDGS
 
 
 	public:
-		void FocusOn(Object::Ptr& model, double distance, double minDistance = 0.0);
+		void FocusOn(Object::Ptr& model, double distance, double mindistance = 0.0);
 		Object::Ptr GetFocus();
 
 		void MoveIn();

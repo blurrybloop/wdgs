@@ -35,7 +35,12 @@ namespace WDGS
 		fboHdr = 0;
 		fboMs = 0;
 		rboDepthMs = 0;
+		rboDepth = 0;
 		fboW = fboH = 0;
+		resId = 0;
+		timestep = 0;
+		lightSource = nullptr;
+		ubo = 0;
 
 		screen = Graphics::Quad::Create();
 
@@ -74,8 +79,8 @@ namespace WDGS
 		std::vector<GLint> envIds;
 		Resources::GetEnvIds(envIds);
 
-		for (size_t i = 0; i < envIds.size(); ++i)
-			combo->AddItem(envIds[i], Resources::GetEnvString(envIds[i], "name_ru"));
+		for (int envId : envIds)
+			combo->AddItem(envId, Resources::GetEnvString(envId, "name_ru"));
 
 		bar->AddComboBox(combo, SetEnvironment, GetEnvironment, this);
 
@@ -86,15 +91,15 @@ namespace WDGS
 		std::vector<GLint> simIds;
 		Resources::GetSimIds(simIds);
 
-		for (size_t i = 0; i < simIds.size(); ++i)
-			combo->AddItem(simIds[i], Resources::GetSimString(simIds[i], "name_ru"));
+		for (int simId : simIds)
+			combo->AddItem(simId, Resources::GetSimString(simId, "name_ru"));
 
 		bar->AddComboBox(combo, Application::SetSim, Application::GetSim, this);
 
 		glGenBuffers(1, &ubo);
 
 		glBindBuffer(GL_UNIFORM_BUFFER, ubo);
-		glBufferData(GL_UNIFORM_BUFFER, 300, NULL, GL_DYNAMIC_DRAW);
+		glBufferData(GL_UNIFORM_BUFFER, 300, nullptr, GL_DYNAMIC_DRAW);
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 		glBindBufferRange(GL_UNIFORM_BUFFER, 0, ubo, 0, 64);
@@ -221,13 +226,14 @@ namespace WDGS
 		glDeleteFramebuffers(1, &fboHdr);
 		glDeleteFramebuffers(1, &fboMs);
 		glDeleteRenderbuffers(1, &rboDepthMs);
+		glDeleteRenderbuffers(1, &rboDepth);
 	}
 
 		void Simulation::AddModel(Body::Ptr& model)
 		{
 			models.push_back(model);
 			gc->AddMP(model->object.get());
-			comboObjects->AddItem(models.size() - 1, model->object->name.c_str());
+			comboObjects->AddItem((int)models.size() - 1, model->object->name.c_str());
 		}
 
 		void Simulation::RemoveModel(Body::Ptr& model)
@@ -261,10 +267,10 @@ namespace WDGS
 
 			gc->Refresh(step, timestep);
 
-			for (auto it = models.begin(); it != models.end(); ++it)
+			for (auto & model : models)
 			{
-				(*it)->object->rotAngle += 2 * glm::pi<double>() * step / (*it)->object->rotPeriod;
-				(*it)->object->rotAngle = SimHelpers::ClampCyclic((*it)->object->rotAngle, 0, 2 * glm::pi<double>());
+				model->object->rotAngle += 2 * glm::pi<double>() * step / model->object->rotPeriod;
+				model->object->rotAngle = SimHelpers::ClampCyclic(model->object->rotAngle, 0, 2 * glm::pi<double>());
 			}
 
 			prevTime = time;
@@ -275,7 +281,8 @@ namespace WDGS
 		{
 			camera->UpdateTransform();
 
-			glBindFramebuffer(GL_FRAMEBUFFER, fboMs);
+			if (fboMs) glBindFramebuffer(GL_FRAMEBUFFER, fboMs);
+			else glBindFramebuffer(GL_FRAMEBUFFER, fboHdr);
 
 			glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -302,9 +309,9 @@ namespace WDGS
 
 			glBufferSubData(GL_UNIFORM_BUFFER, 256, 16, glm::value_ptr(cp));
 
-			for (auto it = models.begin(); it != models.end(); ++it)
+			for (auto & model : models)
 			{
-				(*it)->Render(camera, l);
+				model->Render(camera, l);
 			}
 
 			glDisable(GL_MULTISAMPLE);
@@ -322,19 +329,22 @@ namespace WDGS
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-			for (auto it = models.begin(); it != models.end(); ++it)
+			for (auto & model : models)
 			{
-				if ((*it)->type & Body::Rocky)
+				if (model->type & Body::Rocky)
 				{
-					RockyBody* rb = (RockyBody*)(*it).get();
+					auto* rb = (RockyBody*)model.get();
 					rb->RenderAthmo(camera, l);
 				}
 			}
 
-			glBindFramebuffer(GL_READ_FRAMEBUFFER, fboMs);
-			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboHdr);
+			if (fboMs) 
+			{
+				glBindFramebuffer(GL_READ_FRAMEBUFFER, fboMs);
+				glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboHdr);
 
-			glBlitFramebuffer(0, 0, fboW, fboH, 0, 0, fboW, fboH, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+				glBlitFramebuffer(0, 0, fboW, fboH, 0, 0, fboW, fboH, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+			}
 
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -359,12 +369,14 @@ namespace WDGS
 			glDeleteFramebuffers(1, &fboHdr);
 			glDeleteFramebuffers(1, &fboMs);
 			glDeleteRenderbuffers(1, &rboDepthMs);
+			glDeleteRenderbuffers(1, &rboDepth);
 
 			fboMs = 0;
 			rboDepthMs = 0;
+			rboDepth = 0;
 
 			glGenFramebuffers(1, &fboHdr);
-
+			
 			if (samples > 1)
 			{
 				glGenFramebuffers(1, &fboMs);
@@ -389,19 +401,28 @@ namespace WDGS
 					cdbg << "Framebuffer not complete!" << std::endl;
 				glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			}
+			else 
+			{
+				glGenRenderbuffers(1, &rboDepth);
+				glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
+				glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, fboW, fboH);
+			}
 
+
+			glBindFramebuffer(GL_FRAMEBUFFER, fboHdr);
 			Graphics::Texture::Ptr tex = Graphics::Texture::Create(GL_TEXTURE_2D);
 			screen->ClearTextures();
 			screen->AddTexture(tex, "screen");
 
 			glBindTexture(GL_TEXTURE_2D, *tex);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, fboW, fboH, 0, GL_RGBA, GL_FLOAT, NULL);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, fboW, fboH, 0, GL_RGBA, GL_FLOAT, nullptr);
 
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-			glBindFramebuffer(GL_FRAMEBUFFER, fboHdr);
+			
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, *tex, 0);
+			if (rboDepth) glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
 
 			if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 				cdbg << "Framebuffer not complete!" << std::endl;
@@ -416,7 +437,7 @@ namespace WDGS
 			CreateSceenBuffers(w, h, Config::GetInt("MSAA"));
 		}
 
-		void Simulation::OnKey(GLFWwindow*, int key, int scancode, int action, int mode)
+		void Simulation::OnKey(GLFWwindow*, int key, int /* scancode */, int action, int /* mode */)
 		{
 			if (action == GLFW_PRESS)
 			{
@@ -440,7 +461,7 @@ namespace WDGS
 
 		}
 
-		void Simulation::OnMouseButton(GLFWwindow*, int button, int action, int mods)
+		void Simulation::OnMouseButton(GLFWwindow*, int /* button */, int /* action */, int /* mods */)
 		{
 
 		}
@@ -464,7 +485,7 @@ namespace WDGS
 			prevY = y;
 		}
 
-		void Simulation::OnMouseWheel(GLFWwindow*, double xoffset, double yoffset)
+		void Simulation::OnMouseWheel(GLFWwindow*, double /* xoffset */, double yoffset)
 		{
 			if (yoffset < 0)
 				camera->MoveOut();
@@ -475,16 +496,16 @@ namespace WDGS
 		void Simulation::Save(std::ostream& os)
 		{
 			//выгрузка моделей
-			size_t s = models.size();
+			int s = models.size();
 			os.write((char*)&s, sizeof(s));
-			int t;
+			unsigned int t;
 
-			for (auto it = models.begin(); it != models.end(); ++it)
+			for (auto & model : models)
 			{
-				t = (*it)->type;
+				t = model->type;
 				os.write((char*)&t, sizeof(t));
 
-				(*it)->Save(os);
+				model->Save(os);
 			}
 
 			//выгрузка состояния камеры
@@ -501,8 +522,8 @@ namespace WDGS
 
 		void Simulation::Load(std::istream& is)
 		{
-			int type;
-			size_t len;
+			unsigned int type;
+			int len;
 			Body::Ptr model;
 
 			//загрузка моделей
@@ -511,7 +532,7 @@ namespace WDGS
 			models.clear();
 			models.reserve(len);
 
-			for (size_t i = 0; i < len; ++i)
+			for (int i = 0; i < len; ++i)
 			{
 				//is >> type;
 				is.read((char*)&type, sizeof(type));

@@ -11,17 +11,17 @@ namespace WDGS
 		{
 			buf0.push_back(mp);
 
-			k[0].push_back(std::vector<double>(MP_LENGTH));
-			k[1].push_back(std::vector<double>(MP_LENGTH));
-			k[2].push_back(std::vector<double>(MP_LENGTH));
-			k[3].push_back(std::vector<double>(MP_LENGTH));
+			k[0].emplace_back(MP_LENGTH);
+			k[1].emplace_back(MP_LENGTH);
+			k[2].emplace_back(MP_LENGTH);
+			k[3].emplace_back(MP_LENGTH);
 
 			buf1.push_back(new MaterialPoint);
 			buf2.push_back(new MaterialPoint);
 			buf3.push_back(new MaterialPoint);
 
-			scale.push_back(std::vector<double>(MP_LENGTH));
-			Delta.push_back(std::vector<double>(MP_LENGTH));
+			scale.emplace_back(MP_LENGTH);
+			Delta.emplace_back(MP_LENGTH);
 		}
 
 		void GravityController::RemoveMP(MaterialPoint* mp)
@@ -69,7 +69,7 @@ namespace WDGS
 			if (step - h > DBL_EPSILON)
 			{
 				RK4Step(buf0, buf0, step - h);
-				h += step - h;
+				// h += step - h;
 			}
 		}
 
@@ -162,9 +162,9 @@ namespace WDGS
 			}
 
 			bool exit = false;
-			double error;
+			double error = 0.0;
 
-			while (1) {
+			while (true) {
 				adt = dt;
 
 				RK4Step(in, buf2, dt / 2);
@@ -217,7 +217,7 @@ namespace WDGS
 				dt *= 5;
 			for (int j = 0; j < n; ++j)
 			{
-				out_w = (double*)out[j], buf2_w = (double*)buf2[j], buf3_w = (double*)buf3[j];
+				out_w = (double*)out[j], buf2_w = (double*)buf2[j]; /* , buf3_w = (double*)buf3[j]; */
 				for (int i = 0; i < MP_LENGTH; ++i)
 					out_w[i] = buf2_w[i] + Delta[j][i] / 15;
 			}

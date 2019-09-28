@@ -50,7 +50,7 @@ namespace WDGS
 
 		virtual void Load(std::istream& is)
 		{
-			size_t s = name.length();
+			int s = name.length();
 			is.read((char*)&s, sizeof(s));
 			name.resize(s, 0);
 			is.read((char*)name.c_str(), s);
